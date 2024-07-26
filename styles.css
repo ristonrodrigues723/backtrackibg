@@ -1,12 +1,138 @@
 body {
     font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f0f0f0;
+}
+
+nav {
+    background-color: #333;
+    padding: 10px 0;
+}
+
+nav ul {
+    list-style-type: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+}
+
+nav ul li {
+    margin: 0 15px;
+}
+
+nav ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 18px;
+    transition: color 0.3s;
+}
+
+nav ul li a:hover, nav ul li a.active {
+    color: #4CAF50;
+}
+
+main {
     display: flex;
     flex-direction: column;
     align-items: center;
     padding: 20px;
-    background-color: #f0f0f0;
+    max-width: 800px;
+    margin: 0 auto;
 }
 
+h1 {
+    color: #333;
+    margin-bottom: 30px;
+}
+
+#controls {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 15px;
+    margin-bottom: 30px;
+    width: 100%;
+}
+
+#board {
+    display: grid;
+    gap: 1px;
+    background-color: #000;
+    border: 1px solid #000;
+    box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    margin-bottom: 30px;
+}
+
+.cell {
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 30px;
+    transition: background-color 0.3s;
+}
+
+.white { background-color: #fff; }
+.black { background-color: #ddd; }
+.queen { color: #ff0000; cursor: pointer; }
+.attacked { background-color: #0578f233; }
+.highlighted { background-color: #13257b }
+
+#info, #messageBox {
+    margin-top: 20px;
+    font-size: 18px;
+    text-align: center;
+    width: 100%;
+}
+
+#messageBox {
+    max-width: 600px;
+    min-height: 50px;
+    border: 1px solid #ccc;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 5px;
+}
+
+button, input, select {
+    margin: 5px;
+    padding: 12px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 5px;
+    background-color: #4CAF50;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+button:hover {
+    background-color: #45a049;
+}
+
+input, select {
+    background-color: white;
+    color: black;
+    border: 1px solid #ccc;
+}
+
+#solutionNav {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 20px;
+}
+
+#solutionNav button {
+    margin: 0 15px;
+}
+
+#solutionCount {
+    font-size: 18px;
+    margin: 0 10px;
+}
 h1 { color: #333; }
 
 #controls {
@@ -38,8 +164,8 @@ h1 { color: #333; }
 .white { background-color: #fff; }
 .black { background-color: #ccc; }
 .queen { color: #ff0000; cursor: pointer; }
-.attacked { background-color: rgba(255, 0, 0, 0.2); }
-.highlighted { background-color: rgba(255, 255, 0, 0.3); }
+.attacked { background-color: #13257b }
+.highlighted { background-color: #13257b }
 
 #info, #messageBox {
     margin-top: 20px;
