@@ -13,9 +13,7 @@
             padding: 20px;
             background-color: #f0f0f0;
         }
-        h1 {
-            color: #333;
-        }
+        h1 { color: #333; }
         #controls {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -28,6 +26,7 @@
             background-color: #000;
             border: 1px solid #000;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
         }
         .cell {
             width: 50px;
@@ -40,8 +39,9 @@
         }
         .white { background-color: #fff; }
         .black { background-color: #ccc; }
-        .queen { color: #ff0000; }
+        .queen { color: #ff0000; cursor: pointer; }
         .attacked { background-color: rgba(255, 0, 0, 0.2); }
+        .highlighted { background-color: rgba(255, 255, 0, 0.3); }
         #info, #messageBox {
             margin-top: 20px;
             font-size: 18px;
@@ -59,6 +59,15 @@
             margin: 5px;
             padding: 5px 10px;
             font-size: 16px;
+        }
+        #solutionNav {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+        }
+        #solutionNav button {
+            margin: 0 10px;
         }
     </style>
 </head>
@@ -79,7 +88,7 @@
         </div>
         <div>
             <button onclick="solve(false)">Solve with Animation</button>
-            <button onclick="solve(true)">Solve Instantly</button>
+            <button onclick="solveInstantly()">Solve Instantly</button>
         </div>
         <div>
             <button onclick="reset()">Reset</button>
@@ -87,6 +96,11 @@
         </div>
     </div>
     <div id="board"></div>
+    <div id="solutionNav" style="display: none;">
+        <button onclick="prevSolution()">Previous</button>
+        <span id="solutionCount"></span>
+        <button onclick="nextSolution()">Next</button>
+    </div>
     <div id="info"></div>
     <div id="messageBox"></div>
 
@@ -95,6 +109,8 @@
         let n = 8;
         let solving = false;
         let solutionCount = 0;
+        let allSolutions = [];
+        let currentSolutionIndex = 0;
 
         function solve(instantly) {
             if (solving) return;
@@ -105,7 +121,7 @@
             displayBoard();
             updateMessage("Solving...");
             if (instantly) {
-                solveNQueensInstantly();
+                solveInstantly();
             } else {
                 solveNQueens(0);
             }
@@ -143,33 +159,40 @@
             return false;
         }
 
-        function solveNQueensInstantly() {
-            if (solveNQueensHelper(0)) {
-                displayBoard();
-                updateInfo();
-                updateMessage("Solution found instantly!");
+        function solveInstantly() {
+            n = parseInt(document.getElementById('boardSize').value);
+            board = Array(n).fill().map(() => Array(n).fill(0));
+            allSolutions = [];
+            solveAllNQueens(board, 0);
+            solutionCount = allSolutions.length;
+            
+            if (solutionCount > 0) {
+                currentSolutionIndex = 0;
+                displaySolution(currentSolutionIndex);
+                updateMessage(`Found ${solutionCount} solution(s) instantly!`);
+                document.getElementById('solutionNav').style.display = 'flex';
             } else {
                 updateMessage("No solution exists for the given board size.");
+                document.getElementById('solutionNav').style.display = 'none';
             }
+            
+            updateInfo();
             solving = false;
         }
 
-        function solveNQueensHelper(col) {
+        function solveAllNQueens(board, col) {
             if (col >= n) {
-                solutionCount++;
-                return true;
+                allSolutions.push(board.map(row => [...row]));
+                return;
             }
 
             for (let i = 0; i < n; i++) {
-                if (isSafeInstant(i, col)) {
+                if (isSafeInstant(board, i, col)) {
                     board[i][col] = 1;
-                    if (solveNQueensHelper(col + 1)) {
-                        return true;
-                    }
+                    solveAllNQueens(board, col + 1);
                     board[i][col] = 0;
                 }
             }
-            return false;
         }
 
         async function isSafe(row, col) {
@@ -200,7 +223,7 @@
             return true;
         }
 
-        function isSafeInstant(row, col) {
+        function isSafeInstant(board, row, col) {
             for (let i = 0; i < col; i++)
                 if (board[row][i] === 1) return false;
 
@@ -222,11 +245,64 @@
                 for (let j = 0; j < n; j++) {
                     const cell = document.createElement('div');
                     cell.className = `cell ${(i + j) % 2 === 0 ? 'white' : 'black'}`;
-                    cell.textContent = board[i][j] ? '♛' : '';
-                    if (board[i][j]) cell.classList.add('queen');
+                    cell.dataset.row = i;
+                    cell.dataset.col = j;
+                    if (board[i][j]) {
+                        cell.textContent = '♛';
+                        cell.classList.add('queen');
+                        cell.onclick = highlightQueenMoves;
+                    }
                     boardElement.appendChild(cell);
                 }
             }
+        }
+
+        function highlightQueenMoves(event) {
+            clearHighlights();
+            const row = parseInt(event.target.dataset.row);
+            const col = parseInt(event.target.dataset.col);
+            const cells = document.querySelectorAll('.cell');
+
+            // Highlight horizontal
+            for (let i = 0; i < n; i++) {
+                if (i !== col) cells[row * n + i].classList.add('highlighted');
+            }
+
+            // Highlight vertical
+            for (let i = 0; i < n; i++) {
+                if (i !== row) cells[i * n + col].classList.add('highlighted');
+            }
+
+            // Highlight diagonals
+            for (let i = 1; i < n; i++) {
+                // Top-left to bottom-right
+                if (row + i < n && col + i < n) cells[(row + i) * n + (col + i)].classList.add('highlighted');
+                if (row - i >= 0 && col - i >= 0) cells[(row - i) * n + (col - i)].classList.add('highlighted');
+                
+                // Top-right to bottom-left
+                if (row + i < n && col - i >= 0) cells[(row + i) * n + (col - i)].classList.add('highlighted');
+                if (row - i >= 0 && col + i < n) cells[(row - i) * n + (col + i)].classList.add('highlighted');
+            }
+        }
+
+        function clearHighlights() {
+            document.querySelectorAll('.highlighted').forEach(cell => cell.classList.remove('highlighted'));
+        }
+
+        function displaySolution(index) {
+            board = allSolutions[index];
+            displayBoard();
+            document.getElementById('solutionCount').textContent = `Solution ${index + 1} of ${solutionCount}`;
+        }
+
+        function nextSolution() {
+            currentSolutionIndex = (currentSolutionIndex + 1) % solutionCount;
+            displaySolution(currentSolutionIndex);
+        }
+
+        function prevSolution() {
+            currentSolutionIndex = (currentSolutionIndex - 1 + solutionCount) % solutionCount;
+            displaySolution(currentSolutionIndex);
         }
 
         function highlightAttacked(row, col) {
@@ -239,9 +315,11 @@
             solving = false;
             board = Array(n).fill().map(() => Array(n).fill(0));
             solutionCount = 0;
+            allSolutions = [];
             displayBoard();
             updateInfo();
             updateMessage("Board reset. Ready to solve!");
+            document.getElementById('solutionNav').style.display = 'none';
         }
 
         function generateRandom() {
@@ -253,7 +331,7 @@
                 let row = Math.floor(Math.random() * n);
                 let col = placedQueens;
                 
-                if (isSafeInstant(row, col)) {
+                if (isSafeInstant(board, row, col)) {
                     board[row][col] = 1;
                     placedQueens++;
                 }
