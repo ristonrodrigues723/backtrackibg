@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>N-Queens Visualizer</title>
+    <title>Enhanced N-Queens Visualizer</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,12 +11,20 @@
             flex-direction: column;
             align-items: center;
             padding: 20px;
+            background-color: #f0f0f0;
+        }
+        h1 {
+            color: #333;
+        }
+        #controls {
+            margin-bottom: 20px;
         }
         #board {
             display: grid;
             gap: 1px;
             background-color: #000;
             border: 1px solid #000;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         .cell {
             width: 50px;
@@ -24,77 +32,152 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 24px;
+            font-size: 30px;
+            transition: background-color 0.3s;
         }
-        .white {
-            background-color: #fff;
+        .white { background-color: #fff; }
+        .black { background-color: #ccc; }
+        .queen { color: #ff0000; }
+        .attacked { background-color: rgba(255, 0, 0, 0.2); }
+        #info {
+            margin-top: 20px;
+            font-size: 18px;
         }
-        .black {
-            background-color: #ccc;
+        button, input, select {
+            margin: 5px;
+            padding: 5px 10px;
+            font-size: 16px;
         }
     </style>
 </head>
 <body>
-    <h1>N-Queens Visualizer</h1>
-    <div>
+    <h1>Enhanced N-Queens Visualizer</h1>
+    <div id="controls">
         <label for="boardSize">Board Size:</label>
         <input type="number" id="boardSize" min="4" value="8">
         <button onclick="solve()">Solve</button>
+        <button onclick="reset()">Reset</button>
+        <select id="speed">
+            <option value="1000">Slow</option>
+            <option value="500" selected>Normal</option>
+            <option value="100">Fast</option>
+        </select>
     </div>
     <div id="board"></div>
+    <div id="info"></div>
 
     <script>
+        let board = [];
+        let n = 8;
+        let solving = false;
+        let solutionCount = 0;
+
         function solve() {
-            const n = parseInt(document.getElementById('boardSize').value);
-            const board = Array(n).fill().map(() => Array(n).fill(0));
-            
-            if (solveNQueens(board, 0, n)) {
-                displayBoard(board);
-            } else {
-                alert("No solution exists for the given board size.");
-            }
+            if (solving) return;
+            solving = true;
+            n = parseInt(document.getElementById('boardSize').value);
+            board = Array(n).fill().map(() => Array(n).fill(0));
+            solutionCount = 0;
+            displayBoard();
+            solveNQueens(0);
         }
 
-        function solveNQueens(board, col, n) {
-            if (col >= n) return true;
+        async function solveNQueens(col) {
+            if (col >= n) {
+                solutionCount++;
+                document.getElementById('info').textContent = `Solutions found: ${solutionCount}`;
+                solving = false;
+                return;
+            }
 
             for (let i = 0; i < n; i++) {
-                if (isSafe(board, i, col, n)) {
+                if (await isSafe(i, col)) {
                     board[i][col] = 1;
-                    if (solveNQueens(board, col + 1, n)) return true;
+                    displayBoard();
+                    await sleep(getSpeed());
+
+                    await solveNQueens(col + 1);
+
+                    if (!solving) return;
+
                     board[i][col] = 0;
+                    displayBoard();
+                    await sleep(getSpeed());
                 }
             }
-            return false;
         }
 
-        function isSafe(board, row, col, n) {
-            for (let i = 0; i < col; i++)
-                if (board[row][i]) return false;
+        async function isSafe(row, col) {
+            // Check this row on left side
+            for (let i = 0; i < col; i++) {
+                if (board[row][i] === 1) {
+                    highlightAttacked(row, i);
+                    await sleep(getSpeed() / 2);
+                    return false;
+                }
+            }
 
-            for (let i = row, j = col; i >= 0 && j >= 0; i--, j--)
-                if (board[i][j]) return false;
+            // Check upper diagonal on left side
+            for (let i = row, j = col; i >= 0 && j >= 0; i--, j--) {
+                if (board[i][j] === 1) {
+                    highlightAttacked(i, j);
+                    await sleep(getSpeed() / 2);
+                    return false;
+                }
+            }
 
-            for (let i = row, j = col; i < n && j >= 0; i++, j--)
-                if (board[i][j]) return false;
+            // Check lower diagonal on left side
+            for (let i = row, j = col; i < n && j >= 0; i++, j--) {
+                if (board[i][j] === 1) {
+                    highlightAttacked(i, j);
+                    await sleep(getSpeed() / 2);
+                    return false;
+                }
+            }
 
             return true;
         }
 
-        function displayBoard(board) {
+        function displayBoard() {
             const boardElement = document.getElementById('board');
             boardElement.innerHTML = '';
-            boardElement.style.gridTemplateColumns = `repeat(${board.length}, 50px)`;
+            boardElement.style.gridTemplateColumns = `repeat(${n}, 50px)`;
 
-            for (let i = 0; i < board.length; i++) {
-                for (let j = 0; j < board.length; j++) {
+            for (let i = 0; i < n; i++) {
+                for (let j = 0; j < n; j++) {
                     const cell = document.createElement('div');
                     cell.className = `cell ${(i + j) % 2 === 0 ? 'white' : 'black'}`;
                     cell.textContent = board[i][j] ? '♛' : '';
+                    if (board[i][j]) cell.classList.add('queen');
                     boardElement.appendChild(cell);
                 }
             }
         }
+
+        function highlightAttacked(row, col) {
+            const cells = document.querySelectorAll('.cell');
+            cells[row * n + col].classList.add('attacked');
+            setTimeout(() => cells[row * n + col].classList.remove('attacked'), getSpeed());
+        }
+
+        function reset() {
+            solving = false;
+            board = Array(n).fill().map(() => Array(n).fill(0));
+            solutionCount = 0;
+            displayBoard();
+            document.getElementById('info').textContent = '';
+        }
+
+        function getSpeed() {
+            return parseInt(document.getElementById('speed').value);
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Initialize the board
+        reset();
     </script>
 </body>
 </html>
