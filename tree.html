@@ -3,42 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Backtracking Tree Visualization</title>
+    <title>Improved Backtracking Tree Visualization</title>
     <style>
-        .node {
-            display: inline-block;
-            width: 30px;
-            height: 30px;
-            border-radius: 50%;
-            background-color: #ddd;
-            text-align: center;
-            line-height: 30px;
-            margin: 10px;
-            cursor: pointer;
-            transition: background-color 0.3s;
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+            padding: 20px;
         }
-        .node.visited {
-            background-color: #4CAF50;
+        h1 {
+            color: #333;
         }
-        .node.current {
-            background-color: #2196F3;
-        }
-        .node.backtracked {
-            background-color: #FFC107;
+        p {
+            color: #666;
+            margin-bottom: 20px;
         }
         #tree {
             display: flex;
             flex-direction: column;
             align-items: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
         .level {
             display: flex;
             justify-content: center;
+            position: relative;
+        }
+        .node {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #ddd;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .node.visited {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .node.current {
+            background-color: #2196F3;
+            color: white;
+            transform: scale(1.1);
+        }
+        .node.backtracked {
+            background-color: #FFC107;
+            color: black;
+        }
+        .arrow {
+            position: absolute;
+            width: 2px;
+            background-color: #999;
+            transform-origin: top center;
+        }
+        #reset {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        #reset:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
 <body>
-    <h1>Backtracking Tree Visualization</h1>
+    <h1>Improved Backtracking Tree Visualization</h1>
     <p>Click on nodes to simulate backtracking. Green: visited, Blue: current, Yellow: backtracked</p>
     <div id="tree"></div>
     <button id="reset">Reset</button>
@@ -58,15 +104,37 @@
             tree.forEach((level, i) => {
                 const levelDiv = document.createElement('div');
                 levelDiv.className = 'level';
-                level.forEach(node => {
+                level.forEach((node, j) => {
                     const nodeDiv = document.createElement('div');
                     nodeDiv.className = 'node';
                     nodeDiv.textContent = node;
                     nodeDiv.addEventListener('click', () => visitNode(nodeDiv));
                     levelDiv.appendChild(nodeDiv);
+
+                    if (i > 0) {
+                        const parentIndex = Math.floor(j / 2);
+                        const parentNode = treeElement.children[i - 1].children[parentIndex];
+                        createArrow(parentNode, nodeDiv);
+                    }
                 });
                 treeElement.appendChild(levelDiv);
             });
+        }
+
+        function createArrow(from, to) {
+            const arrow = document.createElement('div');
+            arrow.className = 'arrow';
+            const fromRect = from.getBoundingClientRect();
+            const toRect = to.getBoundingClientRect();
+            const angle = Math.atan2(toRect.top - fromRect.top, toRect.left - fromRect.left);
+            const length = Math.sqrt(Math.pow(toRect.top - fromRect.top, 2) + Math.pow(toRect.left - fromRect.left, 2));
+
+            arrow.style.height = `${length}px`;
+            arrow.style.transform = `rotate(${angle}rad)`;
+            arrow.style.top = `${fromRect.top + from.offsetHeight / 2 - treeElement.offsetTop}px`;
+            arrow.style.left = `${fromRect.left + from.offsetWidth / 2 - treeElement.offsetLeft}px`;
+
+            treeElement.appendChild(arrow);
         }
 
         function visitNode(node) {

@@ -1,192 +1,171 @@
-
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title> Visualization</title>
+    <title>Improved Backtracking Tree Visualization</title>
     <style>
-  
-
-        .dark-mode {
-            --bg-color: #2c2c2c;
-            --text-color: #e0e0e0;
-            --title-color: #d2b48c;
-            --board-bg: #4a3728;
-            --cell-light: #d2b48c;
-            --cell-dark: #8b4513;
-            --visited-bg: #32CD32;
-            --visited-color: #f0f0f0;
-            --button-bg: #6b4226;
-            --button-color: #f0e6d2;
-            --button-hover: #8b5a3b;
-        }
-
         body {
-            font-family: 'Georgia', serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
+            background-color: #f0f0f0;
             padding: 20px;
-            transition: background-color 0.3s, color 0.3s;
         }
-
-        h1, h2, h3 {
-            color: var(--title-color);
+        h1 {
+            color: #333;
         }
-
-        #chessboard {
-            display: grid;
-            gap: 1px;
-            background-color: var(--board-bg);
-            padding: 10px;
-            border-radius: 5px;
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+        p {
+            color: #666;
+            margin-bottom: 20px;
+        }
+        #tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .level {
+            display: flex;
+            justify-content: center;
             position: relative;
         }
-
-        .cell {
+        .node {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #ddd;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 16px;
-            font-weight: bold;
+            margin: 20px;
             cursor: pointer;
             transition: all 0.3s ease;
-            position: relative;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
         }
-
-        .white { background-color: var(--cell-light); }
-        .black { background-color: var(--cell-dark); }
-        .visited { 
-            background-color: var(--visited-bg);
-            color: var(--visited-color);
+        .node.visited {
+            background-color: #4CAF50;
+            color: white;
         }
-
-        .cell:hover {
-            transform: scale(1.05);
+        .node.current {
+            background-color: #2196F3;
+            color: white;
+            transform: scale(1.1);
         }
-
-        .knight::after {
-            content: '♞';
-            font-size: 40px;
+        .node.backtracked {
+            background-color: #FFC107;
+            color: black;
+        }
+        .arrow {
             position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+            width: 2px;
+            background-color: #999;
+            transform-origin: top center;
         }
-
-        #controls, #board-controls {
+        #reset {
             margin-top: 20px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        button {
             padding: 10px 20px;
             font-size: 16px;
-            background-color: var(--button-bg);
-            color: var(--button-color);
+            background-color: #4CAF50;
+            color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.3s ease;
+            transition: background-color 0.3s;
         }
-
-        button:hover {
-            background-color: var(--button-hover);
-        }
-
-        #message, #stats {
-            margin-top: 20px;
-            font-style: italic;
-            text-align: center;
-        }
-
-        #move-history, #saved-tours {
-            margin-top: 20px;
-            max-height: 150px;
-            overflow-y: auto;
-            width: 200px;
-            border: 1px solid var(--text-color);
-            padding: 10px;
-        }
-
-        #explanation {
-            margin-top: 20px;
-            max-width: 600px;
-            text-align: justify;
-        }
-
-        #move-counter {
-            font-size: 24px;
-            font-weight: bold;
-            margin-top: 20px;
-        }
-
-        #path {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        @keyframes knightJump {
-            0% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(0, -20px) scale(1.2); }
-            100% { transform: translate(0, 0) scale(1); }
-        }
-
-        .knight-animated {
-            animation: knightJump 0.5s ease-in-out;
+        #reset:hover {
+            background-color: #45a049;
         }
     </style>
 </head>
 <body>
-    <h1>Advanced Knight's Tour</h1>
-    <div id="board-controls">
-        <button id="board-size-5">5x5</button>
-        <button id="board-size-6">6x6</button>
-        <button id="board-size-8">8x8</button>
-    </div>
-    <div id="chessboard">
-        <svg id="path"></svg>
-    </div>
-    <div id="move-counter">Moves: 0</div>
-    <div id="controls">
-        <button id="reset">Reset</button>
-        <button id="next">Next Move</button>
-        <button id="auto-play">Auto Play</button>
-        <button id="solve">Solve</button>
-        <button id="toggle-dark-mode">Toggle Dark Mode</button>
-        <button id="save-tour">Save Tour</button>
-        <button id="load-tour">Load Tour</button>
-        <button id="challenge-mode">Challenge Mode</button>
-    </div>
-    <div id="message">Click on a square to start the Knight's Tour</div>
-    <div id="stats"></div>
-    <div id="move-history">
-        <h3>Move History</h3>
-        <ul id="history-list"></ul>
-    </div>
-    <div id="saved-tours">
-        <h3>Saved Tours</h3>
-        <ul id="saved-tours-list"></ul>
-    </div>
-    <div id="explanation">
-        <h3>What is a Knight's Tour?</h3>
-        <p>A Knight's Tour is a sequence of moves of a knight on a chessboard such that the knight visits every square exactly once. If the knight ends on a square that is one knight's move from the beginning square (so that it could tour the board again immediately, following the same path), the tour is closed; otherwise, it is open.</p>
-    </div>
+    <h1>Improved Backtracking Tree Visualization</h1>
+    <p>Click on nodes to simulate backtracking. Green: visited, Blue: current, Yellow: backtracked</p>
+    <div id="tree"></div>
+    <button id="reset">Reset</button>
 
-    <audio id="move-sound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAEA" preload="auto"></audio>
+    <script>
+        const tree = [
+            ['A'],
+            ['B', 'C'],
+            ['D', 'E', 'F', 'G']
+        ];
 
-</script>
+        const treeElement = document.getElementById('tree');
+        const resetButton = document.getElementById('reset');
+        let currentNode = null;
+
+        function createTree() {
+            tree.forEach((level, i) => {
+                const levelDiv = document.createElement('div');
+                levelDiv.className = 'level';
+                level.forEach((node, j) => {
+                    const nodeDiv = document.createElement('div');
+                    nodeDiv.className = 'node';
+                    nodeDiv.textContent = node;
+                    nodeDiv.addEventListener('click', () => visitNode(nodeDiv));
+                    levelDiv.appendChild(nodeDiv);
+
+                    if (i > 0) {
+                        const parentIndex = Math.floor(j / 2);
+                        const parentNode = treeElement.children[i - 1].children[parentIndex];
+                        createArrow(parentNode, nodeDiv);
+                    }
+                });
+                treeElement.appendChild(levelDiv);
+            });
+        }
+
+        function createArrow(from, to) {
+            const arrow = document.createElement('div');
+            arrow.className = 'arrow';
+            const fromRect = from.getBoundingClientRect();
+            const toRect = to.getBoundingClientRect();
+            const angle = Math.atan2(toRect.top - fromRect.top, toRect.left - fromRect.left);
+            const length = Math.sqrt(Math.pow(toRect.top - fromRect.top, 2) + Math.pow(toRect.left - fromRect.left, 2));
+
+            arrow.style.height = `${length}px`;
+            arrow.style.transform = `rotate(${angle}rad)`;
+            arrow.style.top = `${fromRect.top + from.offsetHeight / 2 - treeElement.offsetTop}px`;
+            arrow.style.left = `${fromRect.left + from.offsetWidth / 2 - treeElement.offsetLeft}px`;
+
+            treeElement.appendChild(arrow);
+        }
+
+        function visitNode(node) {
+            if (currentNode === node) {
+                backtrack(node);
+            } else if (!node.classList.contains('visited')) {
+                if (currentNode) {
+                    currentNode.classList.remove('current');
+                    currentNode.classList.add('visited');
+                }
+                currentNode = node;
+                node.classList.add('current');
+            }
+        }
+
+        function backtrack(node) {
+            node.classList.remove('current');
+            node.classList.add('backtracked');
+            currentNode = null;
+        }
+
+        function reset() {
+            const nodes = document.querySelectorAll('.node');
+            nodes.forEach(node => {
+                node.classList.remove('visited', 'current', 'backtracked');
+            });
+            currentNode = null;
+        }
+
+        createTree();
+        resetButton.addEventListener('click', reset);
+    </script>
 </body>
 </html>
