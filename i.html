@@ -117,7 +117,26 @@
             background-color: var(--button-hover);
         }
 
+        #message {
+            margin-top: 20px;
+            font-style: italic;
+            text-align: center;
+        }
 
+        #move-history {
+            margin-top: 20px;
+            max-height: 150px;
+            overflow-y: auto;
+            width: 200px;
+            border: 1px solid var(--text-color);
+            padding: 10px;
+        }
+
+        #explanation {
+            margin-top: 20px;
+            max-width: 600px;
+            text-align: justify;
+        }
 
         #move-counter {
             font-size: 24px;
@@ -211,9 +230,70 @@
                 .filter(move => move !== null && !board.children[move].classList.contains('visited'));
         }
 
+        function nextMove() {
+            if (currentPosition === null) {
+                message.textContent = "Please select a starting position first.";
+                return;
+            }
+            const nextMoves = getNextMoves(currentPosition);
+            if (nextMoves.length === 0) {
+                message.textContent = "No more moves available! The tour is complete.";
+                stopAutoPlay();
+                return;
+            }
+            const nextPosition = nextMoves[Math.floor(Math.random() * nextMoves.length)];
+            board.children[currentPosition].classList.remove('knight');
+            currentPosition = nextPosition;
+            moveCount++;
+            updateCell(currentPosition, moveCount);
+            message.textContent = `Move ${moveCount} completed.`;
+            updateMoveHistory(currentPosition);
+        }
 
- 
+        function reset() {
+            currentPosition = null;
+            moveCount = 0;
+            Array.from(board.children).forEach(cell => {
+                cell.classList.remove('visited', 'knight');
+                cell.textContent = '';
+            });
+            message.textContent = "Board reset. Click on a square to start a new tour.";
+            historyList.innerHTML = '';
+            updateMoveCounter();
+            stopAutoPlay();
+        }
 
+        function updateMoveHistory(position) {
+            const li = document.createElement('li');
+            li.textContent = `Move ${moveCount}: ${String.fromCharCode(97 + (position % 8))}${8 - Math.floor(position / 8)}`;
+            historyList.appendChild(li);
+            historyList.scrollTop = historyList.scrollHeight;
+        }
+
+        function updateMoveCounter() {
+            moveCounter.textContent = `Moves: ${moveCount}`;
+        }
+
+        function toggleAutoPlay() {
+            if (autoPlayInterval) {
+                stopAutoPlay();
+            } else {
+                autoPlayBtn.textContent = "Stop Auto Play";
+                autoPlayInterval = setInterval(nextMove, 1000);
+            }
+        }
+
+        function stopAutoPlay() {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+                autoPlayBtn.textContent = "Auto Play";
+            }
+        }
+
+        function toggleDarkMode() {
+            document.body.classList.toggle('dark-mode');
+        }
 
         createBoard();
         resetBtn.addEventListener('click', reset);
