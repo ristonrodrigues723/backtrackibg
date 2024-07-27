@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Knight's Tour Visualization</title>
+    <title>Enhanced Knight's Tour Visualization</title>
     <style>
         :root {
             --bg-color: #f0e6d2;
@@ -44,21 +44,18 @@
             transition: background-color 0.3s, color 0.3s;
         }
 
-        h1 {
-            text-align: center;
+        h1, h2, h3 {
             color: var(--title-color);
-            text-shadow: 1px 1px 2px #d2b48c;
         }
 
         #chessboard {
             display: grid;
-            grid-template-columns: repeat(8, 60px);
-            grid-template-rows: repeat(8, 60px);
             gap: 1px;
             background-color: var(--board-bg);
             padding: 10px;
             border-radius: 5px;
             box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
+            position: relative;
         }
 
         .cell {
@@ -94,7 +91,7 @@
             transform: translate(-50%, -50%);
         }
 
-        #controls {
+        #controls, #board-controls {
             margin-top: 20px;
             display: flex;
             gap: 10px;
@@ -117,7 +114,7 @@
             background-color: var(--button-hover);
         }
 
-        #message {
+        #message, #stats {
             margin-top: 20px;
             font-style: italic;
             text-align: center;
@@ -143,16 +140,31 @@
             font-weight: bold;
             margin-top: 20px;
         }
+
+        @keyframes knightJump {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(0, -20px) scale(1.2); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+
+        .knight-animated {
+            animation: knightJump 0.5s ease-in-out;
+        }
     </style>
 </head>
 <body>
-    <h1>Knight's Tour</h1>
+    <h1>Enhanced Knight's Tour</h1>
+    <div id="board-controls">
+        <button id="board-size-5">5x5</button>
+        <button id="board-size-8">8x8</button>
+    </div>
     <div id="chessboard"></div>
     <div id="move-counter">Moves: 0</div>
     <div id="controls">
         <button id="reset">Reset</button>
         <button id="next">Next Move</button>
         <button id="auto-play">Auto Play</button>
+        <button id="solve">Solve</button>
         <button id="toggle-dark-mode">Toggle Dark Mode</button>
     </div>
     <div id="message">Click on a square to start the Knight's Tour</div>
@@ -172,20 +184,27 @@
         const resetBtn = document.getElementById('reset');
         const nextBtn = document.getElementById('next');
         const autoPlayBtn = document.getElementById('auto-play');
+        const solveBtn = document.getElementById('solve');
         const toggleDarkModeBtn = document.getElementById('toggle-dark-mode');
         const message = document.getElementById('message');
         const historyList = document.getElementById('history-list');
         const moveCounter = document.getElementById('move-counter');
         const moveSound = document.getElementById('move-sound');
+        const boardSize5Btn = document.getElementById('board-size-5');
+        const boardSize8Btn = document.getElementById('board-size-8');
         let currentPosition = null;
         let moveCount = 0;
         let autoPlayInterval = null;
+        let boardSize = 8;
 
         function createBoard() {
-            for (let i = 0; i < 64; i++) {
+            board.innerHTML = '';
+            board.style.gridTemplateColumns = `repeat(${boardSize}, 60px)`;
+            board.style.gridTemplateRows = `repeat(${boardSize}, 60px)`;
+            for (let i = 0; i < boardSize * boardSize; i++) {
                 const cell = document.createElement('div');
                 cell.classList.add('cell');
-                cell.classList.add((i + Math.floor(i / 8)) % 2 === 0 ? 'white' : 'black');
+                cell.classList.add((i + Math.floor(i / boardSize)) % 2 === 0 ? 'white' : 'black');
                 cell.dataset.index = i;
                 cell.addEventListener('click', startTour);
                 board.appendChild(cell);
@@ -206,13 +225,15 @@
             cell.classList.add('visited');
             cell.textContent = count;
             cell.classList.add('knight');
+            cell.classList.add('knight-animated');
+            setTimeout(() => cell.classList.remove('knight-animated'), 500);
             moveSound.play();
             updateMoveCounter();
         }
 
         function getNextMoves(position) {
-            const row = Math.floor(position / 8);
-            const col = position % 8;
+            const row = Math.floor(position / boardSize);
+            const col = position % boardSize;
             const moves = [
                 [-2, -1], [-2, 1], [-1, -2], [-1, 2],
                 [1, -2], [1, 2], [2, -1], [2, 1]
@@ -222,8 +243,8 @@
                 .map(([drow, dcol]) => {
                     const newRow = row + drow;
                     const newCol = col + dcol;
-                    if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
-                        return newRow * 8 + newCol;
+                    if (newRow >= 0 && newRow < boardSize && newCol >= 0 && newCol < boardSize) {
+                        return newRow * boardSize + newCol;
                     }
                     return null;
                 })
@@ -265,7 +286,7 @@
 
         function updateMoveHistory(position) {
             const li = document.createElement('li');
-            li.textContent = `Move ${moveCount}: ${String.fromCharCode(97 + (position % 8))}${8 - Math.floor(position / 8)}`;
+            li.textContent = `Move ${moveCount}: ${String.fromCharCode(97 + (position % boardSize))}${boardSize - Math.floor(position / boardSize)}`;
             historyList.appendChild(li);
             historyList.scrollTop = historyList.scrollHeight;
         }
@@ -295,11 +316,56 @@
             document.body.classList.toggle('dark-mode');
         }
 
+        function changeBoardSize(size) {
+            boardSize = size;
+            createBoard();
+            reset();
+        }
+
+        function solveTour() {
+            reset();
+            const startPosition = Math.floor(Math.random() * (boardSize * boardSize));
+            const tour = warnsdorffSolve(startPosition);
+            if (tour) {
+                autoPlayInterval = setInterval(() => {
+                    if (moveCount < tour.length) {
+                        currentPosition = tour[moveCount];
+                        moveCount++;
+                        updateCell(currentPosition, moveCount);
+                        updateMoveHistory(currentPosition);
+                    } else {
+                        stopAutoPlay();
+                        message.textContent = "Solved tour completed!";
+                    }
+                }, 500);
+            } else {
+                message.textContent = "No solution found. Try again.";
+            }
+        }
+
+        function warnsdorffSolve(start) {
+            const tour = [start];
+            let position = start;
+            while (tour.length < boardSize * boardSize) {
+                const nextMoves = getNextMoves(position);
+                if (nextMoves.length === 0) {
+                    return null; // No solution found
+                }
+                nextMoves.sort((a, b) => getNextMoves(a).length - getNextMoves(b).length);
+                position = nextMoves[0];
+                tour.push(position);
+            }
+            return tour;
+        }
+
         createBoard();
         resetBtn.addEventListener('click', reset);
         nextBtn.addEventListener('click', nextMove);
         autoPlayBtn.addEventListener('click', toggleAutoPlay);
         toggleDarkModeBtn.addEventListener('click', toggleDarkMode);
+        solveBtn.addEventListener('click', solveTour);
+        boardSize5Btn.addEventListener('click', () => changeBoardSize(5));
+        boardSize8Btn.addEventListener('click', () => changeBoardSize(8));
     </script>
 </body>
 </html>
