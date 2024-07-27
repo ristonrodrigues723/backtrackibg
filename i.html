@@ -5,6 +5,111 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Advanced Knight's Tour Visualization</title>
     <style>
+        /* Navbar Styles */
+.navbar {
+    background-color: var(--board-bg);
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.navbar-logo {
+    font-size: 2rem;
+    color: var(--button-color);
+    animation: rotate 5s infinite linear;
+}
+
+.navbar-links {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.navbar-links li {
+    margin-left: 1rem;
+}
+
+.navbar-links a {
+    color: var(--button-color);
+    text-decoration: none;
+    font-weight: bold;
+    transition: color 0.3s ease;
+}
+
+.navbar-links a:hover, .navbar-links a.active {
+    color: var(--visited-bg);
+}
+
+.navbar-toggle {
+    display: none;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 30px;
+    height: 21px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+}
+
+.navbar-toggle span {
+    height: 3px;
+    width: 100%;
+    background-color: var(--button-color);
+    transition: all 0.3s ease;
+}
+
+/* Animations */
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .navbar-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        width: 100%;
+        background-color: var(--board-bg);
+        padding: 1rem;
+    }
+
+    .navbar-links.show {
+        display: flex;
+        animation: fadeIn 0.3s ease;
+    }
+
+    .navbar-links li {
+        margin: 0.5rem 0;
+    }
+
+    .navbar-toggle {
+        display: flex;
+    }
+}
+
+
+body {
+    padding-top: 60px; /* Add space for fixed navbar */
+}
+
+h1 {
+    margin-top: 1rem;
+}
         :root {
             --bg-color: #f0e6d2;
             --text-color: #3a3a3a;
@@ -169,6 +274,19 @@
         }
     </style>
 </head>
+<nav class="navbar">
+    <div class="navbar-logo">♞</div>
+    <ul class="navbar-links">
+        <li><a href="#" class="active">Knight's Tour</a></li>
+        <li><a href="#">How to Play</a></li>
+        <li><a href="#">About</a></li>
+    </ul>
+    <button class="navbar-toggle" id="navbar-toggle">
+        <span></span>
+        <span></span>
+        <span></span>
+    </button>
+</nav>
 <body>
     <h1>Advanced Knight's Tour</h1>
     <div id="board-controls">
@@ -512,4 +630,21 @@ boardSize5Btn.addEventListener('click', () => changeBoardSize(5));
 boardSize6Btn.addEventListener('click', () => changeBoardSize(6));
 boardSize8Btn.addEventListener('click', () => changeBoardSize(8));
 
+// Navbar toggle functionality
+const navbarToggle = document.getElementById('navbar-toggle');
+const navbarLinks = document.querySelector('.navbar-links');
+
+navbarToggle.addEventListener('click', () => {
+    navbarLinks.classList.toggle('show');
+});
+
+// Close mobile menu when a link is clicked
+document.querySelectorAll('.navbar-links a').forEach(link => {
+    link.addEventListener('click', () => {
+        navbarLinks.classList.remove('show');
+    });
+});
 createBoard();
+</script>
+</body>
+</html>
