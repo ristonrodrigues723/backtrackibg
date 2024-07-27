@@ -414,4 +414,102 @@
         }
 
         function startTimer() {
-            startTime = Date.
+    startTime = Date.now();
+    timerInterval = setInterval(updateTimer, 1000);
+}
+
+function stopTimer() {
+    clearInterval(timerInterval);
+}
+
+function updateTimer() {
+    const elapsedTime = Math.floor((Date.now() - startTime) / 1000);
+    const minutes = Math.floor(elapsedTime / 60).toString().padStart(2, '0');
+    const seconds = (elapsedTime % 60).toString().padStart(2, '0');
+    timerDisplay.textContent = `Time: ${minutes}:${seconds}`;
+}
+
+function saveTour() {
+    if (tourHistory.length > 0) {
+        const tourName = prompt("Enter a name for this tour:");
+        if (tourName) {
+            savedTours.push({ name: tourName, history: tourHistory });
+            updateSavedToursList();
+        }
+    } else {
+        message.textContent = "No tour to save. Complete a tour first.";
+    }
+}
+
+function updateSavedToursList() {
+    savedToursList.innerHTML = '';
+    savedTours.forEach((tour, index) => {
+        const li = document.createElement('li');
+        li.textContent = tour.name;
+        li.addEventListener('click', () => loadTour(index));
+        savedToursList.appendChild(li);
+    });
+}
+
+function loadTour(index) {
+    reset();
+    const tour = savedTours[index].history;
+    tourHistory = tour;
+    autoPlayInterval = setInterval(() => {
+        if (moveCount < tour.length) {
+            currentPosition = tour[moveCount];
+            moveCount++;
+            updateCell(currentPosition, moveCount);
+            updateMoveHistory(currentPosition);
+            updatePath();
+        } else {
+            stopAutoPlay();
+            message.textContent = "Loaded tour completed!";
+            stopTimer();
+        }
+    }, 500);
+    startTimer();
+}
+
+function updatePath() {
+    if (!showPath) return;
+    pathSvg.innerHTML = '';
+    if (tourHistory.length < 2) return;
+
+    const pathStr = tourHistory.map(pos => {
+        const x = (pos % boardSize) * 60 + 30;
+        const y = Math.floor(pos / boardSize) * 60 + 30;
+        return `${x},${y}`;
+    }).join(' ');
+
+    const pathElement = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+    pathElement.setAttribute('points', pathStr);
+    pathElement.classList.add('path-line');
+    pathSvg.appendChild(pathElement);
+}
+
+function togglePath() {
+    showPath = !showPath;
+    updatePath();
+    togglePathBtn.textContent = showPath ? "Hide Path" : "Show Path";
+}
+
+resetBtn.addEventListener('click', reset);
+nextBtn.addEventListener('click', nextMove);
+autoPlayBtn.addEventListener('click', toggleAutoPlay);
+solveBtn.addEventListener('click', solveTour);
+toggleDarkModeBtn.addEventListener('click', toggleDarkMode);
+saveTourBtn.addEventListener('click', saveTour);
+loadTourBtn.addEventListener('click', () => {
+    if (savedTours.length > 0) {
+        message.textContent = "Click on a saved tour to load it.";
+    } else {
+        message.textContent = "No saved tours available.";
+    }
+});
+togglePathBtn.addEventListener('click', togglePath);
+boardSize5Btn.addEventListener('click', () => changeBoardSize(5));
+boardSize6Btn.addEventListener('click', () => changeBoardSize(6));
+boardSize8Btn.addEventListener('click', () => changeBoardSize(8));
+
+createBoard();
