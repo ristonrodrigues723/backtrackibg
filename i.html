@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Knight's Tour Visualization</title>
+    <title>Advanced Knight's Tour Visualization</title>
     <style>
         :root {
             --bg-color: #f0e6d2;
@@ -17,6 +17,7 @@
             --button-bg: #8b4513;
             --button-color: #f0e6d2;
             --button-hover: #a0522d;
+            --path-color: #FF4500;
         }
 
         .dark-mode {
@@ -31,6 +32,7 @@
             --button-bg: #6b4226;
             --button-color: #f0e6d2;
             --button-hover: #8b5a3b;
+            --path-color: #FF6347;
         }
 
         body {
@@ -120,7 +122,7 @@
             text-align: center;
         }
 
-        #move-history {
+        #move-history, #saved-tours {
             margin-top: 20px;
             max-height: 150px;
             overflow-y: auto;
@@ -135,7 +137,7 @@
             text-align: justify;
         }
 
-        #move-counter {
+        #move-counter, #timer {
             font-size: 24px;
             font-weight: bold;
             margin-top: 20px;
@@ -150,27 +152,53 @@
         .knight-animated {
             animation: knightJump 0.5s ease-in-out;
         }
+
+        #path {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .path-line {
+            stroke: var(--path-color);
+            stroke-width: 2;
+            fill: none;
+        }
     </style>
 </head>
 <body>
-    <h1>Enhanced Knight's Tour</h1>
+    <h1>Advanced Knight's Tour</h1>
     <div id="board-controls">
         <button id="board-size-5">5x5</button>
+        <button id="board-size-6">6x6</button>
         <button id="board-size-8">8x8</button>
     </div>
-    <div id="chessboard"></div>
+    <div id="chessboard">
+        <svg id="path"></svg>
+    </div>
     <div id="move-counter">Moves: 0</div>
+    <div id="timer">Time: 00:00</div>
     <div id="controls">
         <button id="reset">Reset</button>
         <button id="next">Next Move</button>
         <button id="auto-play">Auto Play</button>
         <button id="solve">Solve</button>
         <button id="toggle-dark-mode">Toggle Dark Mode</button>
+        <button id="save-tour">Save Tour</button>
+        <button id="load-tour">Load Tour</button>
+        <button id="toggle-path">Toggle Path</button>
     </div>
     <div id="message">Click on a square to start the Knight's Tour</div>
     <div id="move-history">
         <h3>Move History</h3>
         <ul id="history-list"></ul>
+    </div>
+    <div id="saved-tours">
+        <h3>Saved Tours</h3>
+        <ul id="saved-tours-list"></ul>
     </div>
     <div id="explanation">
         <h3>What is a Knight's Tour?</h3>
@@ -186,16 +214,28 @@
         const autoPlayBtn = document.getElementById('auto-play');
         const solveBtn = document.getElementById('solve');
         const toggleDarkModeBtn = document.getElementById('toggle-dark-mode');
+        const saveTourBtn = document.getElementById('save-tour');
+        const loadTourBtn = document.getElementById('load-tour');
+        const togglePathBtn = document.getElementById('toggle-path');
         const message = document.getElementById('message');
         const historyList = document.getElementById('history-list');
+        const savedToursList = document.getElementById('saved-tours-list');
         const moveCounter = document.getElementById('move-counter');
+        const timerDisplay = document.getElementById('timer');
         const moveSound = document.getElementById('move-sound');
         const boardSize5Btn = document.getElementById('board-size-5');
+        const boardSize6Btn = document.getElementById('board-size-6');
         const boardSize8Btn = document.getElementById('board-size-8');
+        const pathSvg = document.getElementById('path');
         let currentPosition = null;
         let moveCount = 0;
         let autoPlayInterval = null;
         let boardSize = 8;
+        let startTime = null;
+        let timerInterval = null;
+        let tourHistory = [];
+        let savedTours = [];
+        let showPath = true;
 
         function createBoard() {
             board.innerHTML = '';
@@ -209,6 +249,8 @@
                 cell.addEventListener('click', startTour);
                 board.appendChild(cell);
             }
+            pathSvg.setAttribute('width', boardSize * 60);
+            pathSvg.setAttribute('height', boardSize * 60);
         }
 
         function startTour(e) {
@@ -218,6 +260,9 @@
             updateCell(currentPosition, moveCount);
             message.textContent = "Tour started! Click 'Next Move' to continue.";
             updateMoveHistory(currentPosition);
+            startTimer();
+            tourHistory = [currentPosition];
+            updatePath();
         }
 
         function updateCell(index, count) {
@@ -260,6 +305,7 @@
             if (nextMoves.length === 0) {
                 message.textContent = "No more moves available! The tour is complete.";
                 stopAutoPlay();
+                stopTimer();
                 return;
             }
             const nextPosition = nextMoves[Math.floor(Math.random() * nextMoves.length)];
@@ -269,6 +315,8 @@
             updateCell(currentPosition, moveCount);
             message.textContent = `Move ${moveCount} completed.`;
             updateMoveHistory(currentPosition);
+            tourHistory.push(currentPosition);
+            updatePath();
         }
 
         function reset() {
@@ -282,6 +330,9 @@
             historyList.innerHTML = '';
             updateMoveCounter();
             stopAutoPlay();
+            stopTimer();
+            tourHistory = [];
+            updatePath();
         }
 
         function updateMoveHistory(position) {
@@ -327,17 +378,21 @@
             const startPosition = Math.floor(Math.random() * (boardSize * boardSize));
             const tour = warnsdorffSolve(startPosition);
             if (tour) {
+                tourHistory = tour;
                 autoPlayInterval = setInterval(() => {
                     if (moveCount < tour.length) {
                         currentPosition = tour[moveCount];
                         moveCount++;
                         updateCell(currentPosition, moveCount);
                         updateMoveHistory(currentPosition);
+                        updatePath();
                     } else {
                         stopAutoPlay();
                         message.textContent = "Solved tour completed!";
+                        stopTimer();
                     }
                 }, 500);
+                startTimer();
             } else {
                 message.textContent = "No solution found. Try again.";
             }
@@ -358,14 +413,5 @@
             return tour;
         }
 
-        createBoard();
-        resetBtn.addEventListener('click', reset);
-        nextBtn.addEventListener('click', nextMove);
-        autoPlayBtn.addEventListener('click', toggleAutoPlay);
-        toggleDarkModeBtn.addEventListener('click', toggleDarkMode);
-        solveBtn.addEventListener('click', solveTour);
-        boardSize5Btn.addEventListener('click', () => changeBoardSize(5));
-        boardSize8Btn.addEventListener('click', () => changeBoardSize(8));
-    </script>
-</body>
-</html>
+        function startTimer() {
+            startTime = Date.
