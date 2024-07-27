@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knights Tour Visualization</title>
+    <style>
+        #chessboard {
+            display: grid;
+            grid-template-columns: repeat(8, 50px);
+            grid-template-rows: repeat(8, 50px);
+            gap: 1px;
+            background-color: #000;
+            padding: 1px;
+            width: fit-content;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .white { background-color: #fff; }
+        .black { background-color: #ccc; }
+        .visited { background-color: #90EE90; }
+        #controls {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chessboard"></div>
+    <div id="controls">
+        <button id="reset">Reset</button>
+        <button id="next">Next Move</button>
+    </div>
+
+    <script>
+        const board = document.getElementById('chessboard');
+        const resetBtn = document.getElementById('reset');
+        const nextBtn = document.getElementById('next');
+        let currentPosition = null;
+        let moveCount = 0;
+
+        function createBoard() {
+            for (let i = 0; i < 64; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.classList.add((i + Math.floor(i / 8)) % 2 === 0 ? 'white' : 'black');
+                cell.dataset.index = i;
+                cell.addEventListener('click', startTour);
+                board.appendChild(cell);
+            }
+        }
+
+        function startTour(e) {
+            if (currentPosition !== null) return;
+            currentPosition = parseInt(e.target.dataset.index);
+            moveCount = 1;
+            updateCell(currentPosition, moveCount);
+        }
+
+        function updateCell(index, count) {
+            const cell = board.children[index];
+            cell.classList.add('visited');
+            cell.textContent = count;
+        }
+
+        function getNextMoves(position) {
+            const row = Math.floor(position / 8);
+            const col = position % 8;
+            const moves = [
+                [-2, -1], [-2, 1], [-1, -2], [-1, 2],
+                [1, -2], [1, 2], [2, -1], [2, 1]
+            ];
+
+            return moves
+                .map(([drow, dcol]) => {
+                    const newRow = row + drow;
+                    const newCol = col + dcol;
+                    if (newRow >= 0 && newRow < 8 && newCol >= 0 && newCol < 8) {
+                        return newRow * 8 + newCol;
+                    }
+                    return null;
+                })
+                .filter(move => move !== null && !board.children[move].classList.contains('visited'));
+        }
+
+        function nextMove() {
+            if (currentPosition === null) return;
+            const nextMoves = getNextMoves(currentPosition);
+            if (nextMoves.length === 0) {
+                alert('No more moves available!');
+                return;
+            }
+            const nextPosition = nextMoves[Math.floor(Math.random() * nextMoves.length)];
+            currentPosition = nextPosition;
+            moveCount++;
+            updateCell(currentPosition, moveCount);
+        }
+
+        function reset() {
+            currentPosition = null;
+            moveCount = 0;
+            Array.from(board.children).forEach(cell => {
+                cell.classList.remove('visited');
+                cell.textContent = '';
+            });
+        }
+
+        createBoard();
+        resetBtn.addEventListener('click', reset);
+        nextBtn.addEventListener('click', nextMove);
+    </script>
+</body>
+</html>
