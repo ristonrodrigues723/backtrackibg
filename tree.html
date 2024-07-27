@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Backtracking Tree Visualization</title>
+    <style>
+        .node {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: #ddd;
+            text-align: center;
+            line-height: 30px;
+            margin: 10px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        .node.visited {
+            background-color: #4CAF50;
+        }
+        .node.current {
+            background-color: #2196F3;
+        }
+        .node.backtracked {
+            background-color: #FFC107;
+        }
+        #tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .level {
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Backtracking Tree Visualization</h1>
+    <p>Click on nodes to simulate backtracking. Green: visited, Blue: current, Yellow: backtracked</p>
+    <div id="tree"></div>
+    <button id="reset">Reset</button>
+
+    <script>
+        const tree = [
+            ['A'],
+            ['B', 'C'],
+            ['D', 'E', 'F', 'G']
+        ];
+
+        const treeElement = document.getElementById('tree');
+        const resetButton = document.getElementById('reset');
+        let currentNode = null;
+
+        function createTree() {
+            tree.forEach((level, i) => {
+                const levelDiv = document.createElement('div');
+                levelDiv.className = 'level';
+                level.forEach(node => {
+                    const nodeDiv = document.createElement('div');
+                    nodeDiv.className = 'node';
+                    nodeDiv.textContent = node;
+                    nodeDiv.addEventListener('click', () => visitNode(nodeDiv));
+                    levelDiv.appendChild(nodeDiv);
+                });
+                treeElement.appendChild(levelDiv);
+            });
+        }
+
+        function visitNode(node) {
+            if (currentNode === node) {
+                backtrack(node);
+            } else if (!node.classList.contains('visited')) {
+                if (currentNode) {
+                    currentNode.classList.remove('current');
+                    currentNode.classList.add('visited');
+                }
+                currentNode = node;
+                node.classList.add('current');
+            }
+        }
+
+        function backtrack(node) {
+            node.classList.remove('current');
+            node.classList.add('backtracked');
+            currentNode = null;
+        }
+
+        function reset() {
+            const nodes = document.querySelectorAll('.node');
+            nodes.forEach(node => {
+                node.classList.remove('visited', 'current', 'backtracked');
+            });
+            currentNode = null;
+        }
+
+        createTree();
+        resetButton.addEventListener('click', reset);
+    </script>
+</body>
+</html>
