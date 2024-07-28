@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hamiltonian Cycle Visualization</title>
+    <title>Advanced Hamiltonian Cycle Visualization</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,6 +11,7 @@
             flex-direction: column;
             align-items: center;
             background-color: #f0f0f0;
+            padding: 20px;
         }
         canvas {
             border: 2px solid #333;
@@ -18,9 +19,16 @@
             margin: 20px 0;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button, select {
+            padding: 10px 15px;
+            font-size: 14px;
             background-color: #4CAF50;
             color: white;
             border: none;
@@ -28,43 +36,92 @@
             cursor: pointer;
             transition: background-color 0.3s;
         }
-        button:hover {
+        button:hover, select:hover {
             background-color: #45a049;
         }
-        .controls {
-            margin-top: 20px;
+        input[type="number"] {
+            width: 50px;
+            padding: 5px;
         }
-        label {
-            margin-right: 10px;
+        #stats {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+        #animationSpeed {
+            width: 200px;
         }
     </style>
 </head>
 <body>
-    <h1>Hamiltonian Cycle Visualization</h1>
-    <canvas id="graphCanvas" width="500" height="500"></canvas>
+    <h1>Advanced Hamiltonian Cycle Visualization</h1>
     <div class="controls">
-        <label for="nodeCount">Number of Nodes:</label>
-        <input type="number" id="nodeCount" min="3" max="10" value="5">
+        <label for="nodeCount">Nodes:</label>
+        <input type="number" id="nodeCount" min="3" max="20" value="5">
         <button id="generateBtn">Generate New Cycle</button>
+        <button id="animateBtn">Animate Cycle</button>
+        <select id="layoutSelect">
+            <option value="random">Random Layout</option>
+            <option value="circle">Circular Layout</option>
+        </select>
+        <button id="toggleEdgesBtn">Toggle All Edges</button>
     </div>
+    <div>
+        <label for="animationSpeed">Animation Speed:</label>
+        <input type="range" id="animationSpeed" min="1" max="100" value="50">
+    </div>
+    <canvas id="graphCanvas" width="600" height="600"></canvas>
+    <div id="stats"></div>
     <script>
         const canvas = document.getElementById('graphCanvas');
         const ctx = canvas.getContext('2d');
         const generateBtn = document.getElementById('generateBtn');
+        const animateBtn = document.getElementById('animateBtn');
         const nodeCountInput = document.getElementById('nodeCount');
+        const layoutSelect = document.getElementById('layoutSelect');
+        const toggleEdgesBtn = document.getElementById('toggleEdgesBtn');
+        const animationSpeedInput = document.getElementById('animationSpeed');
+        const statsDiv = document.getElementById('stats');
 
-        function drawGraph(nodes, edges) {
+        let nodes = [];
+        let edges = [];
+        let allEdges = [];
+        let showAllEdges = false;
+        let animationId = null;
+
+        function drawGraph(highlightedEdge = -1) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw edges
-            ctx.beginPath();
-            ctx.moveTo(nodes[edges[0]].x, nodes[edges[0]].y);
-            for (let i = 1; i < edges.length; i++) {
-                ctx.lineTo(nodes[edges[i]].x, nodes[edges[i]].y);
+            // Draw all edges if toggled
+            if (showAllEdges) {
+                ctx.beginPath();
+                allEdges.forEach(edge => {
+                    ctx.moveTo(nodes[edge[0]].x, nodes[edge[0]].y);
+                    ctx.lineTo(nodes[edge[1]].x, nodes[edge[1]].y);
+                });
+                ctx.strokeStyle = '#AAAAAA';
+                ctx.lineWidth = 1;
+                ctx.stroke();
             }
-            ctx.closePath();
-            ctx.strokeStyle = '#FF4136';
-            ctx.lineWidth = 3;
+
+            // Draw Hamiltonian cycle
+            ctx.beginPath();
+            for (let i = 0; i < edges.length; i++) {
+                const startNode = nodes[edges[i]];
+                const endNode = nodes[edges[(i + 1) % edges.length]];
+                ctx.moveTo(startNode.x, startNode.y);
+                ctx.lineTo(endNode.x, endNode.y);
+
+                if (i === highlightedEdge) {
+                    ctx.strokeStyle = '#FF00FF';
+                    ctx.lineWidth = 4;
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(endNode.x, endNode.y);
+                } else {
+                    ctx.strokeStyle = '#FF4136';
+                    ctx.lineWidth = 2;
+                }
+            }
             ctx.stroke();
 
             // Draw nodes
@@ -77,7 +134,6 @@
                 ctx.lineWidth = 2;
                 ctx.stroke();
 
-                // Add node labels
                 ctx.fillStyle = 'white';
                 ctx.font = '12px Arial';
                 ctx.textAlign = 'center';
@@ -86,36 +142,118 @@
             });
         }
 
-        function generateRandomCycle(numNodes) {
-            const nodes = [];
+        function generateRandomLayout(numNodes) {
+            return Array.from({length: numNodes}, () => ({
+                x: Math.random() * (canvas.width - 80) + 40,
+                y: Math.random() * (canvas.height - 80) + 40
+            }));
+        }
+
+        function generateCircularLayout(numNodes) {
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(canvas.width, canvas.height) / 2 - 40;
+            return Array.from({length: numNodes}, (_, i) => ({
+                x: centerX + radius * Math.cos(2 * Math.PI * i / numNodes),
+                y: centerY + radius * Math.sin(2 * Math.PI * i / numNodes)
+            }));
+        }
+
+        function generateAllEdges(numNodes) {
             const edges = [];
-
-            // Generate random node positions
             for (let i = 0; i < numNodes; i++) {
-                nodes.push({
-                    x: Math.random() * (canvas.width - 80) + 40,
-                    y: Math.random() * (canvas.height - 80) + 40
-                });
+                for (let j = i + 1; j < numNodes; j++) {
+                    edges.push([i, j]);
+                }
             }
+            return edges;
+        }
 
-            // Generate a random permutation for the cycle
+        function generateRandomCycle(numNodes) {
+            const layout = layoutSelect.value === 'random' ? generateRandomLayout : generateCircularLayout;
+            nodes = layout(numNodes);
+            allEdges = generateAllEdges(numNodes);
+
             const permutation = Array.from({length: numNodes}, (_, i) => i);
             for (let i = permutation.length - 1; i > 0; i--) {
                 const j = Math.floor(Math.random() * (i + 1));
                 [permutation[i], permutation[j]] = [permutation[j], permutation[i]];
             }
+            edges = permutation;
 
-            edges.push(...permutation, permutation[0]);
+            drawGraph();
+            updateStats();
+        }
 
-            drawGraph(nodes, edges);
+        function animateCycle() {
+            let currentEdge = 0;
+            const animationSpeed = 101 - animationSpeedInput.value; // Invert for intuitive speed control
+
+            function animate() {
+                drawGraph(currentEdge);
+                currentEdge = (currentEdge + 1) % edges.length;
+                animationId = setTimeout(animate, animationSpeed);
+            }
+
+            animate();
+        }
+
+        function updateStats() {
+            const numNodes = nodes.length;
+            const cycleLength = calculateCycleLength();
+            statsDiv.innerHTML = `
+                Number of Nodes: ${numNodes}<br>
+                Number of Edges: ${edges.length}<br>
+                Cycle Length: ${cycleLength.toFixed(2)}
+            `;
+        }
+
+        function calculateCycleLength() {
+            let length = 0;
+            for (let i = 0; i < edges.length; i++) {
+                const startNode = nodes[edges[i]];
+                const endNode = nodes[edges[(i + 1) % edges.length]];
+                length += Math.sqrt(
+                    Math.pow(endNode.x - startNode.x, 2) + 
+                    Math.pow(endNode.y - startNode.y, 2)
+                );
+            }
+            return length;
         }
 
         generateBtn.addEventListener('click', () => {
             const numNodes = parseInt(nodeCountInput.value);
-            if (numNodes >= 3 && numNodes <= 10) {
+            if (numNodes >= 3 && numNodes <= 20) {
                 generateRandomCycle(numNodes);
             } else {
-                alert('Please enter a number between 3 and 10');
+                alert('Please enter a number between 3 and 20');
+            }
+        });
+
+        animateBtn.addEventListener('click', () => {
+            if (animationId) {
+                clearTimeout(animationId);
+                animationId = null;
+                animateBtn.textContent = 'Animate Cycle';
+            } else {
+                animateCycle();
+                animateBtn.textContent = 'Stop Animation';
+            }
+        });
+
+        toggleEdgesBtn.addEventListener('click', () => {
+            showAllEdges = !showAllEdges;
+            drawGraph();
+        });
+
+        layoutSelect.addEventListener('change', () => {
+            generateRandomCycle(nodes.length);
+        });
+
+        animationSpeedInput.addEventListener('input', () => {
+            if (animationId) {
+                clearTimeout(animationId);
+                animateCycle();
             }
         });
 
