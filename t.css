@@ -11,88 +11,48 @@ body {
     min-height: 100vh;
     width: 100vw;
     display: flex;
-    justify-content: start;
-    align-items: center;
     flex-direction: column;
-    gap: 20px;
     background-color: rgb(231, 231, 231);
-    padding: 20px;
 }
 
-/* ... (rest of the CSS remains the same until .node-circle) ... */
-
-.node-circle {
-    stroke: #3498db;
-    stroke-width: 2;
-    transition: all 0.3s ease-in-out;
-}
-
-.node-text {
-    font-size: 14px;
-    text-anchor: middle;
-    dominant-baseline: central;
-    pointer-events: none;
-}
-
-.node-circle.visited {
-    fill: #4CAF50;
-    animation: pulse 0.5s ease-in-out;
-}
-
-.node-circle.backtracked {
-    fill: #FFC107;
-    animation: shake 0.5s ease-in-out;
-}
-
-.node-circle.found {
-    fill: #E1BEE7;
-    animation: celebrate 0.5s ease-in-out;
-}
-
-.node-circle.path {
-    stroke: #FF4081;
-    stroke-width: 3;
-    animation: highlight 0.5s ease-in-out;
-}
-
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
-}
-
-@keyframes shake {
-    0% { transform: translateX(0); }
-    25% { transform: translateX(-3px); }
-    50% { transform: translateX(3px); }
-    75% { transform: translateX(-3px); }
-    100% { transform: translateX(0); }
-}
-
-@keyframes celebrate {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.2); }
-    100% { transform: scale(1); }
-}
-
-@keyframes highlight {
-    0% { stroke-width: 2; }
-    50% { stroke-width: 4; }
-    100% { stroke-width: 3; }
-}
-
-header {
-    height: 100px;
+nav {
+    background-color: #333;
     width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
 }
 
-.heading {
-    color: #3498db;
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: flex-start;
+}
+
+nav li {
+    flex-grow: 1;
+    text-align: center;
+}
+
+nav li a {
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+nav li a:hover {
+    background-color: #ddd;
+    color: black;
+}
+
+nav li a.active {
+    background-color: #4CAF50;
+    color: white;
 }
 
 .container {
@@ -100,22 +60,26 @@ header {
     max-width: 1000px;
     background-color: white;
     box-shadow: 8px 8px 20px rgb(128, 128, 128);
-    position: relative;
     border-radius: 20px;
     padding: 20px;
     display: flex;
     flex-direction: column;
+    margin: 80px auto 20px;
+}
+
+.heading {
+    color: #3498db;
+    text-align: center;
+    margin-bottom: 20px;
 }
 
 .container-header {
-    height: 90px;
     width: 100%;
     display: flex;
     justify-content: center;
     align-items: center;
     gap: 20px;
     margin-bottom: 20px;
-    margin-top: 10px;
 }
 
 .push, .pop, .reset, .box {
@@ -132,14 +96,6 @@ header {
 
 .container-header button:active {
     transform: scale(0.95);
-}
-
-.container-body {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 20px;
 }
 
 #tree-container {
@@ -162,6 +118,7 @@ header {
     flex-wrap: wrap;
     justify-content: space-between;
     padding: 0 20px;
+    margin-top: 20px;
 }
 
 [class^="sec"] {
@@ -224,29 +181,63 @@ header {
 }
 
 .node-circle {
-    stroke: black;
+    fill: #3498db;
+    stroke: rgb(3, 3, 3);
     stroke-width: 2;
+    transition: all 0.3s ease-in-out;
 }
 
 .node-text {
     font-size: 14px;
     text-anchor: middle;
     dominant-baseline: central;
+    fill: white;
+    pointer-events: none;
 }
 
 .node-circle.visited {
     fill: #4CAF50;
-}
-
-.node-circle.current {
-    fill: #2196F3;
+    animation: pulse 0.5s ease-in-out;
 }
 
 .node-circle.backtracked {
     fill: #FFC107;
+    animation: shake 0.5s ease-in-out;
+}
+
+.node-circle.found {
+    fill: #E1BEE7;
+    animation: celebrate 0.5s ease-in-out;
 }
 
 .node-circle.goal {
     stroke: #FF4081;
     stroke-width: 3;
+    animation: highlight 0.5s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    50% { transform: translateX(3px); }
+    75% { transform: translateX(-3px); }
+    100% { transform: translateX(0); }
+}
+
+@keyframes celebrate {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+@keyframes highlight {
+    0% { stroke-width: 2; }
+    50% { stroke-width: 4; }
+    100% { stroke-width: 3; }
 }
