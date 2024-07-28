@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sum of Subsets Visualization</title>
+    <title>Interactive Sum of Subsets Visualization</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -20,7 +20,7 @@
             gap: 10px;
             margin-bottom: 20px;
         }
-        input, button {
+        input, button, select {
             padding: 5px;
             font-size: 16px;
         }
@@ -38,45 +38,98 @@
         .subset.solution {
             background-color: #90EE90;
         }
+        #progress-bar {
+            width: 100%;
+            height: 20px;
+            background-color: #f0f0f0;
+            margin-bottom: 10px;
+        }
+        #progress {
+            width: 0;
+            height: 100%;
+            background-color: #4CAF50;
+            transition: width 0.3s;
+        }
     </style>
 </head>
 <body>
-    <h1>Sum of Subsets Visualization</h1>
+    <h1>Interactive Sum of Subsets Visualization</h1>
     <div id="input-container">
         <label for="set-input">Enter numbers (comma-separated):</label>
         <input type="text" id="set-input" placeholder="e.g., 3,4,5,2">
         <label for="target-sum">Target sum:</label>
         <input type="number" id="target-sum" placeholder="e.g., 9">
-        <button id="visualize-btn">Visualize</button>
+        <label for="sort-order">Sort order:</label>
+        <select id="sort-order">
+            <option value="none">None</option>
+            <option value="asc">Ascending</option>
+            <option value="desc">Descending</option>
+        </select>
+        <label for="show-solutions">
+            <input type="checkbox" id="show-solutions"> Show only solutions
+        </label>
     </div>
+    <div id="progress-bar"><div id="progress"></div></div>
     <div id="visualization-container"></div>
-
     <script>
-        document.getElementById('visualize-btn').addEventListener('click', visualizeSumOfSubsets);
+        const setInput = document.getElementById('set-input');
+        const targetSumInput = document.getElementById('target-sum');
+        const sortOrder = document.getElementById('sort-order');
+        const showSolutions = document.getElementById('show-solutions');
+        const visualizationContainer = document.getElementById('visualization-container');
+        const progressBar = document.getElementById('progress');
 
-        function visualizeSumOfSubsets() {
-            const setInput = document.getElementById('set-input').value;
-            const targetSum = parseInt(document.getElementById('target-sum').value);
-            const set = setInput.split(',').map(num => parseInt(num.trim()));
-            
-            const visualizationContainer = document.getElementById('visualization-container');
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        const updateVisualization = debounce(() => {
+            const set = setInput.value.split(',').map(num => parseInt(num.trim())).filter(num => !isNaN(num));
+            const targetSum = parseInt(targetSumInput.value);
+
             visualizationContainer.innerHTML = '';
-
             const subsets = [];
             findSubsets(set, targetSum, 0, [], subsets);
 
-            subsets.forEach(subset => {
-                const subsetElement = document.createElement('div');
-                subsetElement.className = 'subset';
-                subsetElement.textContent = `[${subset.join(', ')}] = ${subset.reduce((a, b) => a + b, 0)}`;
-                
-                if (subset.reduce((a, b) => a + b, 0) === targetSum) {
-                    subsetElement.classList.add('solution');
+            const maxSubsets = 1000; // Limit for performance
+            const subsetsToShow = subsets.slice(0, maxSubsets);
+
+            if (sortOrder.value !== 'none') {
+                subsetsToShow.sort((a, b) => {
+                    const sumA = a.reduce((acc, curr) => acc + curr, 0);
+                    const sumB = b.reduce((acc, curr) => acc + curr, 0);
+                    return sortOrder.value === 'asc' ? sumA - sumB : sumB - sumA;
+                });
+            }
+
+            subsetsToShow.forEach((subset, index) => {
+                const sum = subset.reduce((a, b) => a + b, 0);
+                if (!showSolutions.checked || sum === targetSum) {
+                    const subsetElement = document.createElement('div');
+                    subsetElement.className = 'subset';
+                    subsetElement.textContent = `[${subset.join(', ')}] = ${sum}`;
+                    
+                    if (sum === targetSum) {
+                        subsetElement.classList.add('solution');
+                    }
+                    
+                    visualizationContainer.appendChild(subsetElement);
                 }
-                
-                visualizationContainer.appendChild(subsetElement);
+
+                progressBar.style.width = `${((index + 1) / subsetsToShow.length) * 100}%`;
             });
-        }
+
+            progressBar.style.width = '100%';
+            setTimeout(() => { progressBar.style.width = '0'; }, 500);
+        }, 300);
 
         function findSubsets(set, targetSum, index, currentSubset, subsets) {
             if (index === set.length) {
@@ -84,14 +137,17 @@
                 return;
             }
 
-            // Include the current element
             currentSubset.push(set[index]);
             findSubsets(set, targetSum, index + 1, currentSubset, subsets);
             
-            // Exclude the current element
             currentSubset.pop();
             findSubsets(set, targetSum, index + 1, currentSubset, subsets);
         }
+
+        setInput.addEventListener('input', updateVisualization);
+        targetSumInput.addEventListener('input', updateVisualization);
+        sortOrder.addEventListener('change', updateVisualization);
+        showSolutions.addEventListener('change', updateVisualization);
     </script>
 </body>
 </html>
