@@ -5,29 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hamiltonian Cycle Visualization</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
         canvas {
-            border: 1px solid black;
+            border: 2px solid #333;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .controls {
+            margin-top: 20px;
+        }
+        label {
+            margin-right: 10px;
         }
     </style>
 </head>
 <body>
-    <canvas id="graphCanvas" width="400" height="400"></canvas>
-    <button id="generateBtn">Generate New Cycle</button>
+    <h1>Hamiltonian Cycle Visualization</h1>
+    <canvas id="graphCanvas" width="500" height="500"></canvas>
+    <div class="controls">
+        <label for="nodeCount">Number of Nodes:</label>
+        <input type="number" id="nodeCount" min="3" max="10" value="5">
+        <button id="generateBtn">Generate New Cycle</button>
+    </div>
     <script>
         const canvas = document.getElementById('graphCanvas');
         const ctx = canvas.getContext('2d');
         const generateBtn = document.getElementById('generateBtn');
+        const nodeCountInput = document.getElementById('nodeCount');
 
         function drawGraph(nodes, edges) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Draw nodes
-            nodes.forEach(node => {
-                ctx.beginPath();
-                ctx.arc(node.x, node.y, 10, 0, 2 * Math.PI);
-                ctx.fillStyle = 'blue';
-                ctx.fill();
-            });
 
             // Draw edges
             ctx.beginPath();
@@ -36,9 +63,27 @@
                 ctx.lineTo(nodes[edges[i]].x, nodes[edges[i]].y);
             }
             ctx.closePath();
-            ctx.strokeStyle = 'red';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#FF4136';
+            ctx.lineWidth = 3;
             ctx.stroke();
+
+            // Draw nodes
+            nodes.forEach((node, index) => {
+                ctx.beginPath();
+                ctx.arc(node.x, node.y, 15, 0, 2 * Math.PI);
+                ctx.fillStyle = '#0074D9';
+                ctx.fill();
+                ctx.strokeStyle = '#001f3f';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Add node labels
+                ctx.fillStyle = 'white';
+                ctx.font = '12px Arial';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(index + 1, node.x, node.y);
+            });
         }
 
         function generateRandomCycle(numNodes) {
@@ -48,8 +93,8 @@
             // Generate random node positions
             for (let i = 0; i < numNodes; i++) {
                 nodes.push({
-                    x: Math.random() * (canvas.width - 40) + 20,
-                    y: Math.random() * (canvas.height - 40) + 20
+                    x: Math.random() * (canvas.width - 80) + 40,
+                    y: Math.random() * (canvas.height - 80) + 40
                 });
             }
 
@@ -65,7 +110,14 @@
             drawGraph(nodes, edges);
         }
 
-        generateBtn.addEventListener('click', () => generateRandomCycle(5));
+        generateBtn.addEventListener('click', () => {
+            const numNodes = parseInt(nodeCountInput.value);
+            if (numNodes >= 3 && numNodes <= 10) {
+                generateRandomCycle(numNodes);
+            } else {
+                alert('Please enter a number between 3 and 10');
+            }
+        });
 
         // Initial generation
         generateRandomCycle(5);
