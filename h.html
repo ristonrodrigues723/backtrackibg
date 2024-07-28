@@ -43,12 +43,15 @@
             width: 50px;
             padding: 5px;
         }
-        #stats {
+        #stats, #pathOrder {
             margin-top: 20px;
             font-size: 14px;
         }
         #animationSpeed {
             width: 200px;
+        }
+        #customPath {
+            width: 300px;
         }
     </style>
 </head>
@@ -62,15 +65,21 @@
         <select id="layoutSelect">
             <option value="random">Random Layout</option>
             <option value="circle">Circular Layout</option>
+            <option value="grid">Grid Layout</option>
         </select>
         <button id="toggleEdgesBtn">Toggle All Edges</button>
+        <button id="optimizeBtn">Optimize Cycle</button>
     </div>
-    <div>
+    <div class="controls">
         <label for="animationSpeed">Animation Speed:</label>
         <input type="range" id="animationSpeed" min="1" max="100" value="50">
+        <label for="customPath">Custom Path:</label>
+        <input type="text" id="customPath" placeholder="e.g., 1,2,3,4,5">
+        <button id="applyCustomPath">Apply Custom Path</button>
     </div>
     <canvas id="graphCanvas" width="600" height="600"></canvas>
     <div id="stats"></div>
+    <div id="pathOrder"></div>
     <script>
         const canvas = document.getElementById('graphCanvas');
         const ctx = canvas.getContext('2d');
@@ -80,7 +89,11 @@
         const layoutSelect = document.getElementById('layoutSelect');
         const toggleEdgesBtn = document.getElementById('toggleEdgesBtn');
         const animationSpeedInput = document.getElementById('animationSpeed');
+        const optimizeBtn = document.getElementById('optimizeBtn');
+        const customPathInput = document.getElementById('customPath');
+        const applyCustomPathBtn = document.getElementById('applyCustomPath');
         const statsDiv = document.getElementById('stats');
+        const pathOrderDiv = document.getElementById('pathOrder');
 
         let nodes = [];
         let edges = [];
@@ -91,7 +104,6 @@
         function drawGraph(highlightedEdge = -1) {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-            // Draw all edges if toggled
             if (showAllEdges) {
                 ctx.beginPath();
                 allEdges.forEach(edge => {
@@ -103,7 +115,6 @@
                 ctx.stroke();
             }
 
-            // Draw Hamiltonian cycle
             ctx.beginPath();
             for (let i = 0; i < edges.length; i++) {
                 const startNode = nodes[edges[i]];
@@ -124,7 +135,6 @@
             }
             ctx.stroke();
 
-            // Draw nodes
             nodes.forEach((node, index) => {
                 ctx.beginPath();
                 ctx.arc(node.x, node.y, 15, 0, 2 * Math.PI);
@@ -159,6 +169,16 @@
             }));
         }
 
+        function generateGridLayout(numNodes) {
+            const gridSize = Math.ceil(Math.sqrt(numNodes));
+            const cellWidth = canvas.width / gridSize;
+            const cellHeight = canvas.height / gridSize;
+            return Array.from({length: numNodes}, (_, i) => ({
+                x: (i % gridSize + 0.5) * cellWidth,
+                y: (Math.floor(i / gridSize) + 0.5) * cellHeight
+            }));
+        }
+
         function generateAllEdges(numNodes) {
             const edges = [];
             for (let i = 0; i < numNodes; i++) {
@@ -170,8 +190,13 @@
         }
 
         function generateRandomCycle(numNodes) {
-            const layout = layoutSelect.value === 'random' ? generateRandomLayout : generateCircularLayout;
-            nodes = layout(numNodes);
+            const layoutFunctions = {
+                'random': generateRandomLayout,
+                'circle': generateCircularLayout,
+                'grid': generateGridLayout
+            };
+            const layoutFunction = layoutFunctions[layoutSelect.value];
+            nodes = layoutFunction(numNodes);
             allEdges = generateAllEdges(numNodes);
 
             const permutation = Array.from({length: numNodes}, (_, i) => i);
@@ -187,7 +212,7 @@
 
         function animateCycle() {
             let currentEdge = 0;
-            const animationSpeed = 101 - animationSpeedInput.value; // Invert for intuitive speed control
+            const animationSpeed = 101 - animationSpeedInput.value;
 
             function animate() {
                 drawGraph(currentEdge);
@@ -206,6 +231,7 @@
                 Number of Edges: ${edges.length}<br>
                 Cycle Length: ${cycleLength.toFixed(2)}
             `;
+            pathOrderDiv.innerHTML = `Path Order: ${edges.map(i => i + 1).join(' → ')}`;
         }
 
         function calculateCycleLength() {
@@ -219,6 +245,43 @@
                 );
             }
             return length;
+        }
+
+        function optimizeCycle() {
+            let improved = true;
+            while (improved) {
+                improved = false;
+                for (let i = 0; i < edges.length - 2; i++) {
+                    for (let j = i + 2; j < edges.length; j++) {
+                        if (j === edges.length - 1 && i === 0) continue;
+                        const currentLength = distance(nodes[edges[i]], nodes[edges[i+1]]) +
+                                              distance(nodes[edges[j]], nodes[edges[(j+1) % edges.length]]);
+                        const newLength = distance(nodes[edges[i]], nodes[edges[j]]) +
+                                          distance(nodes[edges[i+1]], nodes[edges[(j+1) % edges.length]]);
+                        if (newLength < currentLength) {
+                            edges = edges.slice(0, i+1).concat(edges.slice(i+1, j+1).reverse(), edges.slice(j+1));
+                            improved = true;
+                        }
+                    }
+                }
+            }
+            drawGraph();
+            updateStats();
+        }
+
+        function distance(node1, node2) {
+            return Math.sqrt(Math.pow(node2.x - node1.x, 2) + Math.pow(node2.y - node1.y, 2));
+        }
+
+        function applyCustomPath() {
+            const path = customPathInput.value.split(',').map(x => parseInt(x.trim()) - 1);
+            if (path.length !== nodes.length || !path.every(x => x >= 0 && x < nodes.length)) {
+                alert('Invalid path. Please enter a valid permutation of node numbers.');
+                return;
+            }
+            edges = path;
+            drawGraph();
+            updateStats();
         }
 
         generateBtn.addEventListener('click', () => {
@@ -256,6 +319,10 @@
                 animateCycle();
             }
         });
+
+        optimizeBtn.addEventListener('click', optimizeCycle);
+
+        applyCustomPathBtn.addEventListener('click', applyCustomPath);
 
         // Initial generation
         generateRandomCycle(5);
