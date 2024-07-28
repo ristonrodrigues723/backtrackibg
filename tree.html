@@ -5,25 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Binary Tree Backtracking Visualization</title>
     <link rel="stylesheet" href="t.css">
-
 </head>
 <body>
-    <h1>Binary Tree Backtracking Visualization</h1>
-    <p>Goal: Find a path from root to leaf that sums to the target value or search for a specific value.</p>
-    <div id="controls">
-        <button id="generate-binary">Generate Random Binary Tree</button>
-        <button id="solve">Solve Step-by-Step</button>
-        <button id="reset">Reset</button>
+    <header>
+        <h1 class="heading">Binary Tree Backtracking Visualization</h1>
+    </header>
+    <div class="container">
+        <div class="container-header">
+            <button id="generate-binary" class="push">Generate Random Binary Tree</button>
+            <button id="solve" class="pop">Solve Step-by-Step</button>
+            <button id="reset" class="reset">Reset</button>
+        </div>
+        <div class="container-body">
+            <div id="tree-container">
+                <svg id="tree-svg"></svg>
+            </div>
+            <div class="info">
+                <div class="sec1">
+                    <h3>Target Sum:</h3>
+                    <button class="box" id="targetSumDisplay"></button>
+                </div>
+                <div class="sec2">
+                    <h3>Current Node:</h3>
+                    <button class="box" id="currentNodeDisplay"></button>
+                </div>
+                <div class="sec3">
+                    <h3>Current Sum:</h3>
+                    <button class="box" id="currentSumDisplay"></button>
+                </div>
+                <div class="sec4">
+                    <h3>Tree Height:</h3>
+                    <button class="box" id="treeHeight"></button>
+                </div>
+                <div class="search-container">
+                    <input type="number" id="search-input" class="text" placeholder="Enter value to search">
+                    <button id="search-button" class="push">Search</button>
+                </div>
+                <div class="message-box">
+                    <h2>Status</h2>
+                    <div class="message" id="status"></div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div id="tree-container">
-        <div class="tree-wrapper"></div>
-    </div>
-    <div id="search-container">
-        <input type="number" id="search-input" placeholder="Enter value to search">
-        <button id="search-button">Search</button>
-    </div>
-    <div id="status"></div>
-
     <script src="t.js"></script>
 </body>
 </html>
