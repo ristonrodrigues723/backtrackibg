@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sum of Subsets Visualization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+        }
+        #input-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input, button {
+            padding: 5px;
+            font-size: 16px;
+        }
+        #visualization-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .subset {
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #f0f0f0;
+        }
+        .subset.solution {
+            background-color: #90EE90;
+        }
+    </style>
+</head>
+<body>
+    <h1>Sum of Subsets Visualization</h1>
+    <div id="input-container">
+        <label for="set-input">Enter numbers (comma-separated):</label>
+        <input type="text" id="set-input" placeholder="e.g., 3,4,5,2">
+        <label for="target-sum">Target sum:</label>
+        <input type="number" id="target-sum" placeholder="e.g., 9">
+        <button id="visualize-btn">Visualize</button>
+    </div>
+    <div id="visualization-container"></div>
+
+    <script>
+        document.getElementById('visualize-btn').addEventListener('click', visualizeSumOfSubsets);
+
+        function visualizeSumOfSubsets() {
+            const setInput = document.getElementById('set-input').value;
+            const targetSum = parseInt(document.getElementById('target-sum').value);
+            const set = setInput.split(',').map(num => parseInt(num.trim()));
+            
+            const visualizationContainer = document.getElementById('visualization-container');
+            visualizationContainer.innerHTML = '';
+
+            const subsets = [];
+            findSubsets(set, targetSum, 0, [], subsets);
+
+            subsets.forEach(subset => {
+                const subsetElement = document.createElement('div');
+                subsetElement.className = 'subset';
+                subsetElement.textContent = `[${subset.join(', ')}] = ${subset.reduce((a, b) => a + b, 0)}`;
+                
+                if (subset.reduce((a, b) => a + b, 0) === targetSum) {
+                    subsetElement.classList.add('solution');
+                }
+                
+                visualizationContainer.appendChild(subsetElement);
+            });
+        }
+
+        function findSubsets(set, targetSum, index, currentSubset, subsets) {
+            if (index === set.length) {
+                subsets.push([...currentSubset]);
+                return;
+            }
+
+            // Include the current element
+            currentSubset.push(set[index]);
+            findSubsets(set, targetSum, index + 1, currentSubset, subsets);
+            
+            // Exclude the current element
+            currentSubset.pop();
+            findSubsets(set, targetSum, index + 1, currentSubset, subsets);
+        }
+    </script>
+</body>
+</html>
