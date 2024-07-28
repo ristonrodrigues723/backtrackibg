@@ -1,5 +1,3 @@
-// ... (Keep the existing TreeNode, BinaryTree, and helper functions)
-
 const svg = document.getElementById('tree-svg');
 const generateBinaryButton = document.getElementById('generate-binary');
 const solveButton = document.getElementById('solve');
@@ -16,9 +14,21 @@ let root = null;
 let targetSum = 0;
 let solver = null;
 
+class TreeNode {
+    constructor(value) {
+        this.value = value;
+        this.left = null;
+        this.right = null;
+    }
+}
+
 function drawTree() {
+    console.log("Drawing tree...");
     svg.innerHTML = '';
-    if (!root) return;
+    if (!root) {
+        console.log("No root, tree not drawn");
+        return;
+    }
 
     const nodeRadius = 20;
     const levelHeight = 60;
@@ -27,6 +37,8 @@ function drawTree() {
 
     function drawNode(node, x, y, level) {
         if (!node) return;
+
+        console.log(`Drawing node: value=${node.value}, x=${x}, y=${y}, level=${level}`);
 
         const g = document.createElementNS("http://www.w3.org/2000/svg", "g");
         svg.appendChild(g);
@@ -76,11 +88,44 @@ function drawTree() {
     }
 
     drawNode(root, svgWidth / 2, nodeRadius + 10, 0);
+    console.log("Tree drawing complete");
+}
+
+function generateRandomBinaryTree(maxDepth = 5, maxNodes = 20) {
+    console.log("Generating random binary tree...");
+    const rootValue = Math.floor(Math.random() * 10) + 1;
+    const root = new TreeNode(rootValue);
+    let nodeCount = 1;
+
+    function generateNode(node, depth) {
+        if (depth >= maxDepth || nodeCount >= maxNodes) return;
+
+        if (Math.random() < 0.7 && nodeCount < maxNodes) {
+            const leftValue = Math.floor(Math.random() * 10) + 1;
+            node.left = new TreeNode(leftValue);
+            nodeCount++;
+            generateNode(node.left, depth + 1);
+        }
+
+        if (Math.random() < 0.7 && nodeCount < maxNodes) {
+            const rightValue = Math.floor(Math.random() * 10) + 1;
+            node.right = new TreeNode(rightValue);
+            nodeCount++;
+            generateNode(node.right, depth + 1);
+        }
+    }
+
+    generateNode(root, 1);
+    console.log("Random binary tree generated:", root);
+    return root;
 }
 
 function generateNewBinaryTree() {
+    console.log("Generating new binary tree...");
     root = generateRandomBinaryTree();
+    console.log("Root generated:", root);
     drawTree();
+    console.log("Tree drawn");
     
     // Set a random target sum
     const leafSums = [];
@@ -96,12 +141,16 @@ function generateNewBinaryTree() {
     calculateLeafSums(root);
     targetSum = leafSums[Math.floor(Math.random() * leafSums.length)];
     
+    console.log("Target sum calculated:", targetSum);
+    
     targetSumDisplay.textContent = targetSum;
     currentNodeDisplay.textContent = 'None';
     currentSumDisplay.textContent = '0';
     treeHeightDisplay.textContent = getTreeHeight(root);
     statusElement.textContent = `New tree generated. Target sum: ${targetSum}`;
     solver = backtrackingSolver(root, targetSum);
+    
+    console.log("Tree generation complete");
 }
 
 function solveStep() {
@@ -137,60 +186,6 @@ function solveStep() {
     }
 }
 
-function clearHighlights() {
-    document.querySelectorAll('.highlighted').forEach(cell => cell.classList.remove('highlighted'));
-}
-
-function displaySolution(index) {
-    board = allSolutions[index];
-    displayBoard();
-    document.getElementById('solutionCount').textContent = `Solution ${index + 1} of ${solutionCount}`;
-}
-
-function nextSolution() {
-    currentSolutionIndex = (currentSolutionIndex + 1) % solutionCount;
-    displaySolution(currentSolutionIndex);
-}
-
-function prevSolution() {
-    currentSolutionIndex = (currentSolutionIndex - 1 + solutionCount) % solutionCount;
-    displaySolution(currentSolutionIndex);
-}
-
-function highlightAttacked(row, col) {
-    const cells = document.querySelectorAll('.cell');
-    cells[row * n + col].classList.add('attacked');
-    setTimeout(() => cells[row * n + col].classList.remove('attacked'), getSpeed());
-}
-
-function reset() {
-    solving = false;
-    board = Array(n).fill().map(() => Array(n).fill(0));
-    solutionCount = 0;
-    allSolutions = [];
-    displayBoard();
-    updateInfo();
-    updateMessage("Board reset. Ready to solve!");
-    document.getElementById('solutionNav').style.display = 'none';
-}
-
-function generateRandom() {
-    const randomSize = Math.floor(Math.random() * 5) + 4; // Random size between 4 and 8
-    document.getElementById('boardSize').value = randomSize;
-    reset();
-    n = randomSize;
-    let placedQueens = 0;
-    
-    while (placedQueens < n) {
-        let row = Math.floor(Math.random() * n);
-        let col = placedQueens;
-        
-        if (isSafeInstant(board, row, col)) {
-            board[row][col] = 1;
-            placedQueens++;
-        }
-    }
-    
 function reset() {
     const nodes = svg.querySelectorAll('circle');
     nodes.forEach(node => {
@@ -214,11 +209,51 @@ function searchValue() {
     solver = searchValueSolver(root, targetValue);
     solveStep();
 }
+function getTreeHeight(node) {
+    if (!node) return 0;
+    return 1 + Math.max(getTreeHeight(node.left), getTreeHeight(node.right));
+}
 
-generateBinaryButton.addEventListener('click', generateNewBinaryTree);
-solveButton.addEventListener('click', solveStep);
-resetButton.addEventListener('click', reset);
-searchButton.addEventListener('click', searchValue);
+function* backtrackingSolver(node, targetSum, currentSum = 0, path = []) {
+    if (!node) return;
+    currentSum += node.value;
+    path.push(node);
+    yield { type: 'visit', node, currentSum, path: [...path] };
+    if (!node.left && !node.right && currentSum === targetSum) {
+        yield { type: 'found', node, currentSum, path: [...path] };
+    } else {
+        if (node.left) yield* backtrackingSolver(node.left, targetSum, currentSum, path);
+        if (node.right) yield* backtrackingSolver(node.right, targetSum, currentSum, path);
+    }
+    path.pop();
+    yield { type: 'backtrack', node, currentSum: currentSum - node.value, path: [...path] };
+}
 
-// Initialize
-generateNewBinaryTree();
+function* searchValueSolver(node, targetValue, path = []) {
+    if (!node) return;
+    path.push(node);
+    yield { type: 'visit', node, path: [...path] };
+    if (node.value === targetValue) {
+        yield { type: 'found', node, path: [...path] };
+    } else {
+        if (node.left) yield* searchValueSolver(node.left, targetValue, path);
+        if (node.right) yield* searchValueSolver(node.right, targetValue, path);
+    }
+    path.pop();
+    yield { type: 'backtrack', node, path: [...path] };
+}
+
+function getRandomColor() {
+    return '#' + Math.floor(Math.random()*16777215).toString(16);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("DOM fully loaded and parsed");
+    generateBinaryButton.addEventListener('click', generateNewBinaryTree);
+    solveButton.addEventListener('click', solveStep);
+    resetButton.addEventListener('click', reset);
+    searchButton.addEventListener('click', searchValue);
+
+    // Initialize
+    generateNewBinaryTree();
+});
