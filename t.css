@@ -19,6 +19,68 @@ body {
     padding: 20px;
 }
 
+/* ... (rest of the CSS remains the same until .node-circle) ... */
+
+.node-circle {
+    stroke: #3498db;
+    stroke-width: 2;
+    transition: all 0.3s ease-in-out;
+}
+
+.node-text {
+    font-size: 14px;
+    text-anchor: middle;
+    dominant-baseline: central;
+    pointer-events: none;
+}
+
+.node-circle.visited {
+    fill: #4CAF50;
+    animation: pulse 0.5s ease-in-out;
+}
+
+.node-circle.backtracked {
+    fill: #FFC107;
+    animation: shake 0.5s ease-in-out;
+}
+
+.node-circle.found {
+    fill: #E1BEE7;
+    animation: celebrate 0.5s ease-in-out;
+}
+
+.node-circle.path {
+    stroke: #FF4081;
+    stroke-width: 3;
+    animation: highlight 0.5s ease-in-out;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+@keyframes shake {
+    0% { transform: translateX(0); }
+    25% { transform: translateX(-3px); }
+    50% { transform: translateX(3px); }
+    75% { transform: translateX(-3px); }
+    100% { transform: translateX(0); }
+}
+
+@keyframes celebrate {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+@keyframes highlight {
+    0% { stroke-width: 2; }
+    50% { stroke-width: 4; }
+    100% { stroke-width: 3; }
+}
+
 header {
     height: 100px;
     width: 100%;
