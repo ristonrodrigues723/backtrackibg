@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Coloring Backtracking</title>
+    <style>
+        #graph {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .node {
+            width: 50px;
+            height: 50px;
+            border: 1px solid black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Graph Coloring Backtracking</h1>
+    <div id="graph"></div>
+    <button onclick="colorGraph()">Color Graph</button>
+
+    <script>
+        const graph = [
+            [0, 1, 1, 1],
+            [1, 0, 1, 0],
+            [1, 1, 0, 1],
+            [1, 0, 1, 0]
+        ];
+        const colors = ['red', 'green', 'blue', 'yellow'];
+        const nodeColors = new Array(graph.length).fill(null);
+
+        function isSafe(node, color) {
+            for (let i = 0; i < graph.length; i++) {
+                if (graph[node][i] && nodeColors[i] === color) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function graphColoringUtil(node) {
+            if (node === graph.length) {
+                return true;
+            }
+
+            for (let color of colors) {
+                if (isSafe(node, color)) {
+                    nodeColors[node] = color;
+                    if (graphColoringUtil(node + 1)) {
+                        return true;
+                    }
+                    nodeColors[node] = null;
+                }
+            }
+
+            return false;
+        }
+
+        function colorGraph() {
+            if (graphColoringUtil(0)) {
+                updateGraph();
+            } else {
+                alert("No solution exists");
+            }
+        }
+
+        function updateGraph() {
+            const graphElement = document.getElementById('graph');
+            graphElement.innerHTML = '';
+            for (let i = 0; i < graph.length; i++) {
+                const node = document.createElement('div');
+                node.className = 'node';
+                node.style.backgroundColor = nodeColors[i];
+                node.textContent = i + 1;
+                graphElement.appendChild(node);
+            }
+        }
+
+        updateGraph();
+    </script>
+</body>
+</html>
