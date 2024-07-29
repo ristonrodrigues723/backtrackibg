@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complex Graph Coloring Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        #controls {
+            margin-bottom: 20px;
+        }
+        button {
+            margin-right: 10px;
+            padding: 5px 10px;
+        }
+        #graph-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 1200px;
+        }
+        #graph {
+            width: 70%;
+            height: 600px;
+            border: 1px solid #ccc;
+        }
+        #sidebar {
+            width: 28%;
+        }
+        #adjacency-matrix {
+            margin-top: 20px;
+        }
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
+        }
+        .node {
+            cursor: pointer;
+        }
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <h1>Complex Graph Coloring Visualization</h1>
+    <div id="controls">
+        <button onclick="addNode()">Add Node</button>
+        <button onclick="removeNode()">Remove Node</button>
+        <button onclick="colorGraph()">Color Graph</button>
+        <button onclick="resetGraph()">Reset Graph</button>
+        <button onclick="generateRandomGraph()">Generate Random Graph</button>
+    </div>
+    <div id="graph-container">
+        <div id="graph"></div>
+        <div id="sidebar">
+            <div>
+                <h3>Node Shape:</h3>
+                <select id="nodeShape" onchange="updateNodeShapes()">
+                    <option value="circle">Circle</option>
+                    <option value="rect">Square</option>
+                    <option value="diamond">Diamond</option>
+                    <option value="triangle">Triangle</option>
+                </select>
+            </div>
+            <div id="adjacency-matrix"></div>
+        </div>
+    </div>
+    <div id="status"></div>
+
+    <script>
+        let graph = {
+            nodes: [
+                {id: 1}, {id: 2}, {id: 3}, {id: 4}
+            ],
+            links: [
+                {source: 1, target: 2},
+                {source: 1, target: 3},
+                {source: 1, target: 4},
+                {source: 2, target: 3},
+                {source: 3, target: 4}
+            ]
+        };
+
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F'];
+        let nodeColors = {};
+
+        let simulation, svg, linkElements, nodeElements;
+
+        function initializeGraph() {
+            const width = document.getElementById('graph').clientWidth;
+            const height = document.getElementById('graph').clientHeight;
+
+            svg = d3.select('#graph')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+
+            simulation = d3.forceSimulation(graph.nodes)
+                .force('link', d3.forceLink(graph.links).id(d => d.id))
+                .force('charge', d3.forceManyBody().strength(-300))
+                .force('center', d3.forceCenter(width / 2, height / 2));
+
+            linkElements = svg.append('g')
+                .selectAll('line')
+                .data(graph.links)
+                .enter().append('line')
+                .attr('class', 'link');
+
+            nodeElements = svg.append('g')
+                .selectAll('.node')
+                .data(graph.nodes)
+                .enter().append('g')
+                .attr('class', 'node')
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended));
+
+            nodeElements.append('circle')
+                .attr('r', 20)
+                .attr('fill', 'white')
+                .attr('stroke', 'black');
+
+            nodeElements.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'central')
+                .text(d => d.id);
+
+            simulation.on('tick', () => {
+                linkElements
+                    .attr('x1', d => d.source.x)
+                    .attr('y1', d => d.source.y)
+                    .attr('x2', d => d.target.x)
+                    .attr('y2', d => d.target.y);
+
+                nodeElements.attr('transform', d => `translate(${d.x},${d.y})`);
+            });
+        }
+
+        function updateGraph() {
+            simulation.nodes(graph.nodes);
+            simulation.force('link').links(graph.links);
+
+            linkElements = linkElements.data(graph.links);
+            linkElements.exit().remove();
+            linkElements = linkElements.enter().append('line')
+                .attr('class', 'link')
+                .merge(linkElements);
+
+            nodeElements = nodeElements.data(graph.nodes, d => d.id);
+            nodeElements.exit().remove();
+            let nodeEnter = nodeElements.enter().append('g')
+                .attr('class', 'node')
+                .call(d3.drag()
+                    .on('start', dragstarted)
+                    .on('drag', dragged)
+                    .on('end', dragended));
+
+            nodeEnter.append('circle')
+                .attr('r', 20)
+                .attr('fill', 'white')
+                .attr('stroke', 'black');
+
+            nodeEnter.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'central')
+                .text(d => d.id);
+
+            nodeElements = nodeEnter.merge(nodeElements);
+
+            simulation.alpha(1).restart();
+            updateAdjacencyMatrix();
+        }
+
+        function updateNodeColors() {
+            nodeElements.select('circle').attr('fill', d => nodeColors[d.id] || 'white');
+        }
+
+        function updateNodeShapes() {
+            const shape = document.getElementById('nodeShape').value;
+            nodeElements.selectAll('*').remove();
+
+            switch (shape) {
+                case 'rect':
+                    nodeElements.append('rect')
+                        .attr('width', 40)
+                        .attr('height', 40)
+                        .attr('x', -20)
+                        .attr('y', -20)
+                        .attr('fill', d => nodeColors[d.id] || 'white')
+                        .attr('stroke', 'black');
+                    break;
+                case 'diamond':
+                    nodeElements.append('path')
+                        .attr('d', d3.symbol().type(d3.symbolDiamond).size(400))
+                        .attr('fill', d => nodeColors[d.id] || 'white')
+                        .attr('stroke', 'black');
+                    break;
+                case 'triangle':
+                    nodeElements.append('path')
+                        .attr('d', d3.symbol().type(d3.symbolTriangle).size(400))
+                        .attr('fill', d => nodeColors[d.id] || 'white')
+                        .attr('stroke', 'black');
+                    break;
+                default:
+                    nodeElements.append('circle')
+                        .attr('r', 20)
+                        .attr('fill', d => nodeColors[d.id] || 'white')
+                        .attr('stroke', 'black');
+            }
+
+            nodeElements.append('text')
+                .attr('text-anchor', 'middle')
+                .attr('dominant-baseline', 'central')
+                .text(d => d.id);
+        }
+
+        function updateAdjacencyMatrix() {
+            const matrixElement = document.getElementById('adjacency-matrix');
+            matrixElement.innerHTML = '<h3>Adjacency Matrix</h3>';
+            const table = document.createElement('table');
+            for (let i = 0; i < graph.nodes.length; i++) {
+                const row = document.createElement('tr');
+                for (let j = 0; j < graph.nodes.length; j++) {
+                    const cell = document.createElement('td');
+                    cell.textContent = graph.links.some(link => 
+                        (link.source.id === graph.nodes[i].id && link.target.id === graph.nodes[j].id) ||
+                        (link.source.id === graph.nodes[j].id && link.target.id === graph.nodes[i].id)
+                    ) ? '1' : '0';
+                    cell.style.padding = '5px';
+                    cell.style.border = '1px solid black';
+                    row.appendChild(cell);
+                }
+                table.appendChild(row);
+            }
+            matrixElement.appendChild(table);
+        }
+
+        function colorGraph() {
+            nodeColors = {};
+            if (graphColoringUtil(0)) {
+                updateNodeColors();
+                document.getElementById('status').textContent = 'Graph colored successfully!';
+            } else {
+                document.getElementById('status').textContent = 'No solution exists for the current graph.';
+            }
+        }
+
+        function graphColoringUtil(nodeIndex) {
+            if (nodeIndex === graph.nodes.length) {
+                return true;
+            }
+
+            for (let color of colors) {
+                if (isSafe(graph.nodes[nodeIndex].id, color)) {
+                    nodeColors[graph.nodes[nodeIndex].id] = color;
+                    if (graphColoringUtil(nodeIndex + 1)) {
+                        return true;
+                    }
+                    delete nodeColors[graph.nodes[nodeIndex].id];
+                }
+            }
+
+            return false;
+        }
+
+        function isSafe(nodeId, color) {
+            for (let link of graph.links) {
+                if ((link.source.id === nodeId && nodeColors[link.target.id] === color) ||
+                    (link.target.id === nodeId && nodeColors[link.source.id] === color)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function addNode() {
+            const newId = Math.max(...graph.nodes.map(n => n.id)) + 1;
+            graph.nodes.push({id: newId});
+            updateGraph();
+        }
+
+        function removeNode() {
+            if (graph.nodes.length > 1) {
+                const removedId = graph.nodes.pop().id;
+                graph.links = graph.links.filter(link => link.source.id !== removedId && link.target.id !== removedId);
+                updateGraph();
+            }
+        }
+
+        function resetGraph() {
+            nodeColors = {};
+            updateNodeColors();
+            document.getElementById('status').textContent = '';
+        }
+
+        function generateRandomGraph() {
+            const nodeCount = Math.floor(Math.random() * 6) + 5; // 5 to 10 nodes
+            graph.nodes = Array.from({length: nodeCount}, (_, i) => ({id: i + 1}));
+            graph.links = [];
+
+            for (let i = 0; i < nodeCount; i++) {
+                for (let j = i + 1; j < nodeCount; j++) {
+                    if (Math.random() < 0.5) {
+                        graph.links.push({source: i + 1, target: j + 1});
+                    }
+                }
+            }
+
+            updateGraph();
+        }
+
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+
+        initializeGraph();
+    </script>
+</body>
+</html>
