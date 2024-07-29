@@ -174,17 +174,21 @@
         }
 
         function updateCell(x, y, className, ratIndex = 0) {
-            setTimeout(() => {
-                const cell = document.getElementById(`cell-${x}-${y}`);
-                cell.className = `cell ${className}`;
-                if (className === 'path') {
-                    cell.textContent = '🐀' + (ratIndex + 1);
-                } else {
-                    cell.textContent = '';
-                }
-            }, delay);
-            delay += 30;
+    setTimeout(() => {
+        const cell = document.getElementById(`cell-${x}-${y}`);
+        if (className === '') {
+            cell.className = 'cell';
+        } else {
+            cell.className = `cell ${className}`;
         }
+        if (className === 'path') {
+            cell.textContent = '🐀' + (ratIndex + 1);
+        } else {
+            cell.textContent = '';
+        }
+    }, delay);
+    delay += 30;
+}
 
         function isSafe(x, y) {
             return x >= 0 && x < n && y >= 0 && y < n && maze[x][y] === 1;
@@ -221,32 +225,8 @@
             return false;
         }
 
-        function solveMaze() {
-            delay = 0;
-            solvedPaths = 0;
-            solution = Array(n).fill().map(() => Array(n).fill(0));
-            
-            for (let i = 0; i < n; i++) {
-                for (let j = 0; j < n; j++) {
-                    if (maze[i][j] === 1) {
-                        updateCell(i, j, '');
-                    }
-                }
-            }
 
-            for (let i = 0; i < ratCount; i++) {
-                if (solveMazeUtil(0, 0, i)) {
-                    console.log(`Rat ${i + 1} found a solution`);
-                } else {
-                    console.log(`Rat ${i + 1} couldn't find a solution`);
-                }
-            }
-
-            setTimeout(() => {
-                statsElement.textContent = `Paths found: ${solvedPaths} out of ${ratCount} rats`;
-            }, delay);
-        }
-
+        
         function generateMaze() {
             n = parseInt(document.getElementById('mazeSize').value);
             const complexity = document.getElementById('mazeComplexity').value;
