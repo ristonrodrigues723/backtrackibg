@@ -3,38 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Graph Coloring Backtracking</title>
+    <title>Advanced Graph Coloring Backtracking</title>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #graph-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
         #graph {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
+            width: 60%;
         }
         .node {
             width: 50px;
             height: 50px;
-            border: 1px solid black;
+            border: 2px solid black;
+            border-radius: 50%;
             display: flex;
             justify-content: center;
             align-items: center;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        #adjacency-matrix {
+            width: 35%;
+        }
+        #controls {
+            margin-bottom: 20px;
+        }
+        button {
+            margin-right: 10px;
+        }
+        #status {
+            margin-top: 20px;
             font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <h1>Graph Coloring Backtracking</h1>
-    <div id="graph"></div>
-    <button onclick="colorGraph()">Color Graph</button>
+    <h1>Advanced Graph Coloring Backtracking</h1>
+    <div id="controls">
+        <button onclick="addNode()">Add Node</button>
+        <button onclick="removeNode()">Remove Node</button>
+        <button onclick="colorGraph()">Color Graph</button>
+        <button onclick="resetGraph()">Reset Graph</button>
+    </div>
+    <div id="graph-container">
+        <div id="graph"></div>
+        <div id="adjacency-matrix"></div>
+    </div>
+    <div id="status"></div>
 
     <script>
-        const graph = [
+        let graph = [
             [0, 1, 1, 1],
             [1, 0, 1, 0],
             [1, 1, 0, 1],
             [1, 0, 1, 0]
         ];
-        const colors = ['red', 'green', 'blue', 'yellow'];
-        const nodeColors = new Array(graph.length).fill(null);
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F'];
+        let nodeColors = new Array(graph.length).fill(null);
 
         function isSafe(node, color) {
             for (let i = 0; i < graph.length; i++) {
@@ -64,10 +100,12 @@
         }
 
         function colorGraph() {
+            nodeColors = new Array(graph.length).fill(null);
             if (graphColoringUtil(0)) {
                 updateGraph();
+                document.getElementById('status').textContent = 'Graph colored successfully!';
             } else {
-                alert("No solution exists");
+                document.getElementById('status').textContent = 'No solution exists for the current graph.';
             }
         }
 
@@ -77,10 +115,72 @@
             for (let i = 0; i < graph.length; i++) {
                 const node = document.createElement('div');
                 node.className = 'node';
-                node.style.backgroundColor = nodeColors[i];
+                node.style.backgroundColor = nodeColors[i] || 'white';
                 node.textContent = i + 1;
+                node.onclick = () => toggleEdge(i);
                 graphElement.appendChild(node);
             }
+            updateAdjacencyMatrix();
+        }
+
+        function updateAdjacencyMatrix() {
+            const matrixElement = document.getElementById('adjacency-matrix');
+            matrixElement.innerHTML = '<h3>Adjacency Matrix</h3>';
+            const table = document.createElement('table');
+            for (let i = 0; i < graph.length; i++) {
+                const row = document.createElement('tr');
+                for (let j = 0; j < graph.length; j++) {
+                    const cell = document.createElement('td');
+                    cell.textContent = graph[i][j];
+                    cell.style.padding = '5px';
+                    cell.style.border = '1px solid black';
+                    row.appendChild(cell);
+                }
+                table.appendChild(row);
+            }
+            matrixElement.appendChild(table);
+        }
+
+        function toggleEdge(node) {
+            const selectedNodes = document.querySelectorAll('.node.selected');
+            if (selectedNodes.length === 0) {
+                document.querySelectorAll('.node')[node].classList.add('selected');
+            } else if (selectedNodes.length === 1) {
+                const otherNode = parseInt(selectedNodes[0].textContent) - 1;
+                if (otherNode !== node) {
+                    graph[node][otherNode] = 1 - graph[node][otherNode];
+                    graph[otherNode][node] = graph[node][otherNode];
+                    updateGraph();
+                }
+                selectedNodes[0].classList.remove('selected');
+            }
+        }
+
+        function addNode() {
+            const newRow = new Array(graph.length + 1).fill(0);
+            graph.push(newRow);
+            for (let i = 0; i < graph.length; i++) {
+                graph[i].push(0);
+            }
+            nodeColors.push(null);
+            updateGraph();
+        }
+
+        function removeNode() {
+            if (graph.length > 1) {
+                graph.pop();
+                for (let i = 0; i < graph.length; i++) {
+                    graph[i].pop();
+                }
+                nodeColors.pop();
+                updateGraph();
+            }
+        }
+
+        function resetGraph() {
+            nodeColors = new Array(graph.length).fill(null);
+            updateGraph();
+            document.getElementById('status').textContent = '';
         }
 
         updateGraph();
