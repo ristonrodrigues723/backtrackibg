@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Rat in a Maze - Interactive Solver</title>
+    <title> Rat in a Maze - Interactive Backtracking Solver</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -147,14 +147,14 @@
     </div>
 
     <script>
-        let maze = [];
-        let n = 8;
-        let solution = [];
-        let mazeElement = document.getElementById('maze');
-        let statsElement = document.getElementById('stats');
-        let delay = 0;
-        let ratCount = 1;
-        let solvedPaths = 0;
+       let maze = [];
+    let n = 8;
+    let solution = [];
+    let mazeElement = document.getElementById('maze');
+    let statsElement = document.getElementById('stats');
+    let delay = 0;
+    let ratCount = 1;
+    let solvedPaths = 0;
 
         function createMazeUI() {
             mazeElement.innerHTML = '';
@@ -174,79 +174,84 @@
         }
 
         function updateCell(x, y, className, ratIndex = 0) {
-            setTimeout(() => {
-                const cell = document.getElementById(`cell-${x}-${y}`);
-                cell.className = `cell ${className}`;
-                if (className === 'path') {
-                    cell.textContent = '🐀' + (ratIndex + 1);
-                } else {
-                    cell.textContent = '';
-                }
-            }, delay);
-            delay += 30;
+        setTimeout(() => {
+            const cell = document.getElementById(`cell-${x}-${y}`);
+            cell.className = `cell ${className}`;
+            if (className === 'path') {
+                cell.textContent = '🐀' + (ratIndex + 1);
+            } else if (className === 'visited') {
+                cell.textContent = '❌';
+            } else {
+                cell.textContent = '';
+            }
+        }, delay);
+        delay += 50;
+    }
+
+    function isSafe(x, y) {
+        return x >= 0 && x < n && y >= 0 && y < n && maze[x][y] === 1;
+    }
+
+    function solveMazeUtil(x, y, ratIndex) {
+        if (x === n - 1 && y === n - 1) {
+            solution[x][y] = 1;
+            updateCell(x, y, 'path', ratIndex);
+            solvedPaths++;
+            return true;
         }
 
-        function isSafe(x, y) {
-            return x >= 0 && x < n && y >= 0 && y < n && maze[x][y] === 1;
-        }
+        if (isSafe(x, y) && solution[x][y] === 0) {
+            solution[x][y] = 1;
+            updateCell(x, y, 'path', ratIndex);
 
-        function solveMazeUtil(x, y, ratIndex) {
-            if (x === n - 1 && y === n - 1) {
-                solution[x][y] = 1;
-                updateCell(x, y, 'path', ratIndex);
-                solvedPaths++;
-                return true;
-            }
+            const moves = [
+                { dx: 1, dy: 0 },  // right
+                { dx: 0, dy: 1 },  // down
+                { dx: -1, dy: 0 }, // left
+                { dx: 0, dy: -1 }  // up
+            ];
 
-            if (isSafe(x, y)) {
-                solution[x][y] = 1;
-                updateCell(x, y, 'path', ratIndex);
-
-                const moves = [
-                    { dx: 1, dy: 0 },  // right
-                    { dx: 0, dy: 1 },  // down
-                    { dx: -1, dy: 0 }, // left
-                    { dx: 0, dy: -1 }  // up
-                ];
-
-                for (let move of moves) {
-                    if (solveMazeUtil(x + move.dx, y + move.dy, ratIndex)) return true;
+            for (let move of moves) {
+                if (solveMazeUtil(x + move.dx, y + move.dy, ratIndex)) {
+                    return true;
                 }
-
-                solution[x][y] = 0;
-                updateCell(x, y, 'visited');
-                return false;
             }
 
+            // Backtrack
+            solution[x][y] = 0;
+            updateCell(x, y, 'visited');
             return false;
         }
 
-        function solveMaze() {
-            delay = 0;
-            solvedPaths = 0;
-            solution = Array(n).fill().map(() => Array(n).fill(0));
-            
-            for (let i = 0; i < n; i++) {
-                for (let j = 0; j < n; j++) {
-                    if (maze[i][j] === 1) {
-                        updateCell(i, j, '');
-                    }
+        return false;
+    }
+
+    function solveMaze() {
+        delay = 0;
+        solvedPaths = 0;
+        solution = Array(n).fill().map(() => Array(n).fill(0));
+        
+        for (let i = 0; i < n; i++) {
+            for (let j = 0; j < n; j++) {
+                if (maze[i][j] === 1) {
+                    updateCell(i, j, '');
                 }
             }
-
-            for (let i = 0; i < ratCount; i++) {
-                if (solveMazeUtil(0, 0, i)) {
-                    console.log(`Rat ${i + 1} found a solution`);
-                } else {
-                    console.log(`Rat ${i + 1} couldn't find a solution`);
-                }
-            }
-
-            setTimeout(() => {
-                statsElement.textContent = `Paths found: ${solvedPaths} out of ${ratCount} rats`;
-            }, delay);
         }
 
+        for (let i = 0; i < ratCount; i++) {
+            solution = Array(n).fill().map(() => Array(n).fill(0)); // Reset solution for each rat
+            if (solveMazeUtil(0, 0, i)) {
+                console.log(`Rat ${i + 1} found a solution`);
+            } else {
+                console.log(`Rat ${i + 1} couldn't find a solution`);
+            }
+        }
+
+        setTimeout(() => {
+            statsElement.textContent = `Paths found: ${solvedPaths} out of ${ratCount} rats`;
+        }, delay);
+    }    
         function generateMaze() {
             n = parseInt(document.getElementById('mazeSize').value);
             const complexity = document.getElementById('mazeComplexity').value;
