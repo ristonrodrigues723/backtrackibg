@@ -3,301 +3,187 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Advanced Rat in a Maze - Interactive Solver</title>
+    <title>Advanced Graph Coloring Backtracking</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #f0f8ff;
-            color: #333;
-            line-height: 1.6;
-        }
-        #maze-container {
-            background-color: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+            font-family: Arial, sans-serif;
             max-width: 800px;
-            width: 95%;
-            margin: 20px auto;
+            margin: 0 auto;
+            padding: 20px;
         }
-        h1 {
-            color: #2c3e50;
-            text-align: center;
+        #graph-container {
+            display: flex;
+            justify-content: space-between;
             margin-bottom: 20px;
         }
-        #maze {
-            display: grid;
-            gap: 2px;
-            background-color: #34495e;
-            padding: 2px;
-            margin: 20px auto;
-            border-radius: 5px;
-        }
-        .cell {
-            aspect-ratio: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-weight: bold;
-            transition: all 0.3s ease;
-            border-radius: 3px;
-            font-size: 14px;
-        }
-        .wall { background-color: #2c3e50; }
-        .path { background-color: #2ecc71; }
-        .visited { background-color: #e74c3c; }
-        .start { background-color: #3498db; }
-        .end { background-color: #f1c40f; }
-        #controls {
+        #graph {
             display: flex;
             flex-wrap: wrap;
-            justify-content: center;
             gap: 10px;
-            margin-bottom: 20px;
+            width: 60%;
         }
-        button, select, input {
-            padding: 8px 15px;
-            font-size: 14px;
-            border: none;
-            border-radius: 5px;
-            background-color: #3498db;
-            color: white;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-        button:hover, select:hover {
-            background-color: #2980b9;
-        }
-        select, input {
-            background-color: #ecf0f1;
-            color: #333;
-        }
-        #stats {
-            text-align: center;
-            margin-top: 20px;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        #legend {
+        .node {
+            width: 50px;
+            height: 50px;
+            border: 2px solid black;
+            border-radius: 50%;
             display: flex;
             justify-content: center;
-            gap: 15px;
-            margin-top: 20px;
-            flex-wrap: wrap;
-        }
-        .legend-item {
-            display: flex;
             align-items: center;
-            gap: 5px;
+            font-weight: bold;
+            cursor: pointer;
         }
-        .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 3px;
+        #adjacency-matrix {
+            width: 35%;
+        }
+        #controls {
+            margin-bottom: 20px;
+        }
+        button {
+            margin-right: 10px;
+        }
+        #status {
+            margin-top: 20px;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
-    <div id="maze-container">
-        <h1>Advanced Rat in a Maze - Interactive Solver</h1>
-        <div id="controls">
-            <select id="mazeSize">
-                <option value="5">5x5</option>
-                <option value="8">8x8</option>
-                <option value="10">10x10</option>
-                <option value="15">15x15</option>
-            </select>
-            <select id="mazeComplexity">
-                <option value="easy">Easy</option>
-                <option value="medium">Medium</option>
-                <option value="hard">Hard</option>
-            </select>
-            <input type="number" id="ratCount" min="1" max="5" value="1">
-            <button onclick="generateMaze()">Generate Maze</button>
-            <button onclick="solveMaze()">Solve Maze</button>
-            <button onclick="resetMaze()">Reset</button>
-        </div>
-        <div id="maze"></div>
-        <div id="stats"></div>
-        <div id="legend">
-            <div class="legend-item">
-                <div class="legend-color start"></div>
-                <span>Start</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color end"></div>
-                <span>End</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color path"></div>
-                <span>Path</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color visited"></div>
-                <span>Visited</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color wall"></div>
-                <span>Wall</span>
-            </div>
-        </div>
+    <h1>Depth first serch</h1>
+    <div id="controls">
+        <button onclick="addNode()">Add Node</button>
+        <button onclick="removeNode()">Remove Node</button>
+        <button onclick="colorGraph()">Color Graph</button>
+        <button onclick="resetGraph()">Reset Graph</button>
     </div>
+    <div id="graph-container">
+        <div id="graph"></div>
+        <div id="adjacency-matrix"></div>
+    </div>
+    <div id="status"></div>
 
     <script>
-        let maze = [];
-        let n = 8;
-        let solution = [];
-        let mazeElement = document.getElementById('maze');
-        let statsElement = document.getElementById('stats');
-        let delay = 0;
-        let ratCount = 1;
-        let solvedPaths = 0;
+        let graph = [
+            [0, 1, 1, 1],
+            [1, 0, 1, 0],
+            [1, 1, 0, 1],
+            [1, 0, 1, 0]
+        ];
+        const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F'];
+        let nodeColors = new Array(graph.length).fill(null);
 
-        function createMazeUI() {
-            mazeElement.innerHTML = '';
-            mazeElement.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
-            mazeElement.style.width = `${Math.min(600, n * 40)}px`;
-
-            for (let i = 0; i < n; i++) {
-                for (let j = 0; j < n; j++) {
-                    const cell = document.createElement('div');
-                    cell.className = maze[i][j] ? 'cell' : 'cell wall';
-                    cell.id = `cell-${i}-${j}`;
-                    mazeElement.appendChild(cell);
+        function isSafe(node, color) {
+            for (let i = 0; i < graph.length; i++) {
+                if (graph[node][i] && nodeColors[i] === color) {
+                    return false;
                 }
             }
-            document.getElementById('cell-0-0').classList.add('start');
-            document.getElementById(`cell-${n-1}-${n-1}`).classList.add('end');
+            return true;
         }
 
-        function updateCell(x, y, className, ratIndex = 0) {
-    setTimeout(() => {
-        const cell = document.getElementById(`cell-${x}-${y}`);
-        if (className === '') {
-            cell.className = 'cell';
-        } else {
-            cell.className = `cell ${className}`;
-        }
-        if (className === 'path') {
-            cell.textContent = '🐀' + (ratIndex + 1);
-        } else {
-            cell.textContent = '';
-        }
-    }, delay);
-    delay += 30;
-}
-
-        function isSafe(x, y) {
-            return x >= 0 && x < n && y >= 0 && y < n && maze[x][y] === 1;
-        }
-
-        function solveMazeUtil(x, y, ratIndex) {
-            if (x === n - 1 && y === n - 1) {
-                solution[x][y] = 1;
-                updateCell(x, y, 'path', ratIndex);
-                solvedPaths++;
+        function graphColoringUtil(node) {
+            if (node === graph.length) {
                 return true;
             }
 
-            if (isSafe(x, y)) {
-                solution[x][y] = 1;
-                updateCell(x, y, 'path', ratIndex);
-
-                const moves = [
-                    { dx: 1, dy: 0 },  // right
-                    { dx: 0, dy: 1 },  // down
-                    { dx: -1, dy: 0 }, // left
-                    { dx: 0, dy: -1 }  // up
-                ];
-
-                for (let move of moves) {
-                    if (solveMazeUtil(x + move.dx, y + move.dy, ratIndex)) return true;
-                }
-
-                solution[x][y] = 0;
-                updateCell(x, y, 'visited');
-                return false;
-            }
-
-            return false;
-        }
-
-
-        
-        function generateMaze() {
-            n = parseInt(document.getElementById('mazeSize').value);
-            const complexity = document.getElementById('mazeComplexity').value;
-            ratCount = parseInt(document.getElementById('ratCount').value);
-
-            let wallProbability;
-            switch (complexity) {
-                case 'easy': wallProbability = 0.3; break;
-                case 'medium': wallProbability = 0.4; break;
-                case 'hard': wallProbability = 0.5; break;
-            }
-
-            do {
-                maze = Array(n).fill().map(() => Array(n).fill(1));
-                
-                for (let i = 0; i < n; i++) {
-                    for (let j = 0; j < n; j++) {
-                        if (Math.random() < wallProbability) {
-                            maze[i][j] = 0;
-                        }
+            for (let color of colors) {
+                if (isSafe(node, color)) {
+                    nodeColors[node] = color;
+                    if (graphColoringUtil(node + 1)) {
+                        return true;
                     }
-                }
-
-                // Ensure start and end are open
-                maze[0][0] = 1;
-                maze[n-1][n-1] = 1;
-
-            } while (!isPathPossible(0, 0, n-1, n-1));
-
-            createMazeUI();
-            statsElement.textContent = '';
-        }
-
-        function isPathPossible(startX, startY, endX, endY) {
-            const visited = Array(n).fill().map(() => Array(n).fill(false));
-            const queue = [[startX, startY]];
-            visited[startX][startY] = true;
-
-            while (queue.length > 0) {
-                const [x, y] = queue.shift();
-                if (x === endX && y === endY) return true;
-
-                const directions = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-                for (let [dx, dy] of directions) {
-                    const newX = x + dx, newY = y + dy;
-                    if (isSafe(newX, newY) && !visited[newX][newY]) {
-                        queue.push([newX, newY]);
-                        visited[newX][newY] = true;
-                    }
+                    nodeColors[node] = null;
                 }
             }
 
             return false;
         }
 
-
-        
-        function resetMaze() {
-            for (let i = 0; i < n; i++) {
-                for (let j = 0; j < n; j++) {
-                    const cell = document.getElementById(`cell-${i}-${j}`);
-                    if (cell.classList.contains('path') || cell.classList.contains('visited')) {
-                        cell.className = 'cell';
-                        cell.textContent = '';
-                    }
-                }
+        function colorGraph() {
+            nodeColors = new Array(graph.length).fill(null);
+            if (graphColoringUtil(0)) {
+                updateGraph();
+                document.getElementById('status').textContent = 'Graph colored successfully!';
+            } else {
+                document.getElementById('status').textContent = 'No solution exists for the current graph.';
             }
-            statsElement.textContent = '';
         }
 
-        generateMaze();
+        function updateGraph() {
+            const graphElement = document.getElementById('graph');
+            graphElement.innerHTML = '';
+            for (let i = 0; i < graph.length; i++) {
+                const node = document.createElement('div');
+                node.className = 'node';
+                node.style.backgroundColor = nodeColors[i] || 'white';
+                node.textContent = i + 1;
+                node.onclick = () => toggleEdge(i);
+                graphElement.appendChild(node);
+            }
+            updateAdjacencyMatrix();
+        }
+
+        function updateAdjacencyMatrix() {
+            const matrixElement = document.getElementById('adjacency-matrix');
+            matrixElement.innerHTML = '<h3>Adjacency Matrix</h3>';
+            const table = document.createElement('table');
+            for (let i = 0; i < graph.length; i++) {
+                const row = document.createElement('tr');
+                for (let j = 0; j < graph.length; j++) {
+                    const cell = document.createElement('td');
+                    cell.textContent = graph[i][j];
+                    cell.style.padding = '5px';
+                    cell.style.border = '1px solid black';
+                    row.appendChild(cell);
+                }
+                table.appendChild(row);
+            }
+            matrixElement.appendChild(table);
+        }
+
+        function toggleEdge(node) {
+            const selectedNodes = document.querySelectorAll('.node.selected');
+            if (selectedNodes.length === 0) {
+                document.querySelectorAll('.node')[node].classList.add('selected');
+            } else if (selectedNodes.length === 1) {
+                const otherNode = parseInt(selectedNodes[0].textContent) - 1;
+                if (otherNode !== node) {
+                    graph[node][otherNode] = 1 - graph[node][otherNode];
+                    graph[otherNode][node] = graph[node][otherNode];
+                    updateGraph();
+                }
+                selectedNodes[0].classList.remove('selected');
+            }
+        }
+
+        function addNode() {
+            const newRow = new Array(graph.length + 1).fill(0);
+            graph.push(newRow);
+            for (let i = 0; i < graph.length; i++) {
+                graph[i].push(0);
+            }
+            nodeColors.push(null);
+            updateGraph();
+        }
+
+        function removeNode() {
+            if (graph.length > 1) {
+                graph.pop();
+                for (let i = 0; i < graph.length; i++) {
+                    graph[i].pop();
+                }
+                nodeColors.pop();
+                updateGraph();
+            }
+        }
+
+        function resetGraph() {
+            nodeColors = new Array(graph.length).fill(null);
+            updateGraph();
+            document.getElementById('status').textContent = '';
+        }
+
+        updateGraph();
     </script>
 </body>
 </html>
