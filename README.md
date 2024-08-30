@@ -122,6 +122,93 @@ Solve: Attempts to automatically solve the tour (find a complete path).
 Reset: Resets the board and clears the tour.
 Use the "Save Tour" and "Load Tour" buttons to save and load tours from local storage.
 Toggle dark mode by clicking the "Toggle Dark Mode" button.
+
+5)Rat in a Maze - Interactive Backtracking Solver
+<img width="960" alt="image" src="https://github.com/user-attachments/assets/0ea7979d-f272-4f5b-be21-3d02f312cf9e">
+
+This web application allows you to visualize the backtracking algorithm used to solve a maze problem with multiple rats.
+
+Features:
+
+Choose the size of the maze (5x5, 8x8, 10x10, 15x15)
+Select the maze complexity (easy, medium, hard)
+Specify the number of rats to solve the maze (1 to 5)
+Generate a random maze
+Visualize the solution path for each rat
+Option to show visited cells
+Reset the maze
+How to Use:
+
+Open the index.html file in your web browser.
+Choose the desired maze size, complexity, and number of rats using the dropdown menus.
+Click the "Generate Maze" button to create a new maze.
+Click the "Solve Maze" button to start the backtracking algorithm and visualize the solution paths for each rat.
+(Optional) The application allows showing visited cells while solving the maze.
+Explanation:
+
+The maze is represented as a 2D grid where 1 represents a walkable cell and 0 represents a wall. The backtracking algorithm recursively tries all possible paths from the starting point until it finds a path that leads to the end point for each rat.
+
+Dependencies:
+
+This application is a standalone HTML, CSS, and JavaScript file and does not require any external libraries.
 Explanation
 
 The "Explanation" section provides a brief explanation of the Knight's Tour problem.
+
+6)Interactive Sum of Subsets Visualization
+<img width="948" alt="image" src="https://github.com/user-attachments/assets/9f129063-49a3-4ad3-a0e1-95352fb3fd49">
+<img width="941" alt="image" src="https://github.com/user-attachments/assets/02018df7-d051-4e8d-b9d4-bfc038b85129">
+
+This interactive application allows you to visualize all possible subsets of a given set that add up to a specific target sum.
+
+Features:
+
+Enter a comma-separated list of numbers for the set.
+Specify the target sum you want the subsets to add up to.
+Choose a sorting order (ascending, descending, or none) for the displayed subsets.
+Optionally, show only subsets that meet the target sum.
+How to Use:
+
+Open the application in a web browser.
+Enter your desired set of numbers in the "Enter numbers (comma-separated)" field (e.g., 3,4,5,2).
+Enter the target sum in the "Target sum" field (e.g., 9).
+Select your preferred sorting order from the "Sort order" dropdown menu.
+Check the "Show only solutions" checkbox to display only subsets that add up to the target sum.
+Click anywhere outside the input fields to trigger the visualization update.
+Technical Details:
+
+The application utilizes HTML, CSS, and JavaScript for interactivity and visualization.
+It employs a debounce function to optimize performance by limiting the number of updates during user input.
+A recursive findSubsets function explores all combinations within the set to find subsets that meet the target sum.
+
+7)Tree Visualization with Search Functionality
+
+<img width="956" alt="image" src="https://github.com/user-attachments/assets/ad2b2207-bbef-4cca-8e57-842def350c7e">
+This interactive application allows you to visualize a randomly generated binary tree and search for specific values within it.
+
+Features:
+
+Generates a random binary tree with a customizable depth and maximum number of nodes.
+Displays the tree structure using SVG elements.
+Provides buttons to:
+Generate a new random tree
+Step-by-step visualization of the search process
+Reset the search and visualization
+Offers a search bar to enter a value for searching within the tree.
+Highlights the visited nodes, backtracked paths, and the found node during the search process (with animations).
+Displays the current node and the tree height.
+How to Use:
+
+Click the "Generate Random Binary Tree" button to create a new tree.
+Enter a value in the search bar.
+Click the "Search" button to initiate the search process.
+The application will highlight visited nodes in blue and backtracked paths in yellow.
+If the value is found, the entire path to the node will be highlighted in green.
+Use the "Solve Step-by-Step" button to progress the search animation manually (optional).
+Click the "Reset" button to clear the search results and generate a new tree (optional).
+Technical Details:
+
+The application utilizes HTML, CSS, and JavaScript for user interaction and visualization.
+It generates random binary trees with a user-defined depth and node limitations.
+The search functionality employs a generator function that iterates through the tree structure, highlighting nodes and paths.
+SVG elements are used to create the visual representation of the tree.
